@@ -13,3 +13,9 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.10.8",
+    "numpy-stl>=3.2.0",
+]
