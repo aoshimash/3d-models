@@ -7,14 +7,9 @@ Parametric 3D model repository using CadQuery (Python). Designed for FDM printin
 - **CAD**: CadQuery
 - **Runtime**: Python 3.13+ managed by uv
 - **Lint / Format**: ruff
-- **Nix**: flake.nix provides dev shell with native dependencies (libstdc++, libGL, etc.)
-
 ## Commands
 
 ```bash
-# Enter dev shell (required on NixOS - provides native libs for cadquery-ocp)
-nix develop
-
 # Environment
 uv sync                                          # Install dependencies
 uv add <package>                                  # Add a dependency
