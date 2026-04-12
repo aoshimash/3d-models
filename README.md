@@ -1,6 +1,6 @@
 # 3d-models
 
-Parametric 3D models built with [CadQuery](https://cadquery.readthedocs.io/) (Python), designed for FDM printing on a Bambu Lab A1 Mini.
+Parametric 3D models built with [CadQuery](https://cadquery.readthedocs.io/) (Python).
 
 All dimensions are parameterized — tweak the variables at the top of each script to fit your needs.
 
@@ -44,15 +44,6 @@ The STL file will be written to `models/<model-name>/output/`.
    - Define all dimensions as variables at the top with comments
    - Assign the final shape to `result`
    - Export to `output/<model-name>.stl`
-
-## Print Settings
-
-These models are designed for a **Bambu Lab A1 Mini** (180 × 180 × 180 mm build volume).
-
-Default assumptions:
-- Nozzle: 0.4 mm
-- Min wall thickness: 1.2 mm (3 perimeters)
-- Fit tolerance: +0.2 mm per side for sliding fits
 
 ## License
 
