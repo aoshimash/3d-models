@@ -12,5 +12,6 @@ wheels/
 # direnv
 .direnv/
 
-# Generated STL files
-**/output/
+# Bambu Studio logs
+log_iotc.txt
+

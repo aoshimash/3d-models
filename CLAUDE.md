@@ -39,7 +39,7 @@ uv run ruff check --fix .
 models/
   <model-name>/
     <model-name>.py       # CadQuery script (single file per part)
-    output/               # Generated STL files (gitignored)
+    output/               # Generated STL files (committed)
 pyproject.toml
 ```
 
