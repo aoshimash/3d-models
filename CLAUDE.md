@@ -7,6 +7,7 @@ Multiple CAD tools supported, organized by tool under `models/`.
 
 - **CAD (CadQuery)**: Python 3.13+ managed by uv, linted with ruff
 - **CAD (JSCAD)**: Node.js, @jscad/modeling + @jscad/stl-serializer
+- **CAD (OpenSCAD)**: OpenSCAD nightly + BOSL2 library
 
 ## Commands
 
@@ -23,6 +24,10 @@ uv run ruff check --fix .
 cd models/jscad
 npm install                                       # Install dependencies
 node <model-name>/<model-name>.js                 # Generate STL
+
+# --- OpenSCAD ---
+/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD -o output.stl model.scad   # CLI export
+# Or open .scad file in OpenSCAD GUI (F5=preview, F6=render)
 ```
 
 ## Rules
@@ -45,6 +50,10 @@ models/
     package.json
     <model-name>/
       <model-name>.js         # JSCAD script
+      output/                 # Generated STL files (committed)
+  openscad/                   # OpenSCAD models
+    <model-name>/
+      <model-name>.scad       # OpenSCAD script (uses BOSL2)
       output/                 # Generated STL files (committed)
 pyproject.toml                # Python/CadQuery dependencies
 ```
@@ -71,6 +80,17 @@ pyproject.toml                # Python/CadQuery dependencies
 - Use explicit `translate()`, `rotate()` for positioning (no implicit coordinate transforms)
 - Each script must be runnable standalone via `node <script>.js` to export STL
 - Use `@jscad/stl-serializer` for binary STL output
+
+### OpenSCAD Conventions
+
+- Define all dimensions as variables at the top of the script
+- Add a comment with unit (mm) and purpose for each parameter
+- Use BOSL2 library (`include <BOSL2/std.scad>`) for shapes and joiners
+- Use BOSL2 joiners for joints: `dovetail()`, `snap_pin()`, `snap_pin_socket()`, etc.
+- Use `$slop` for global fit tolerance (default 0.1 for FDM)
+- Use explicit `translate()`, `rotate()` for positioning (no implicit coordinate transforms)
+- Each script must be runnable standalone via OpenSCAD CLI to export STL
+- Use `$fn` for circle resolution (24 for preview, 48+ for export)
 
 ### 3D Printing (Bambu Lab A1 Mini)
 

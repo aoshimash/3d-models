@@ -12,6 +12,7 @@
   "type": "commonjs",
   "dependencies": {
     "@jscad/modeling": "^2.13.0",
-    "@jscad/stl-serializer": "^2.1.23"
+    "@jscad/stl-serializer": "^2.1.23",
+    "jscad-now": "^1.2.3"
   }
 }
