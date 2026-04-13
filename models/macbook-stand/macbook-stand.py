@@ -1,10 +1,11 @@
 """Side rail for dual MacBook Pro 13-inch shelf stand (two-part with diagonal tenon).
 
-Print 2 copies of each part (4 total: 2 front, 2 back).
-Assembly: push the two halves together at a 15-degree angle (forward + toward wall).
-The diagonal tenon locks both X and Z axes without glue.
-Place one assembled rail against each side wall of the shelf.
-MacBooks slide in horizontally from the front, resting on the ledges.
+Print 2 copies of each rail part (4 total: 2 front, 2 back).
+Print 8 bridge bars (4 lower + 4 upper).
+Assembly:
+  1. Join front and back rail halves at 15-degree angle (diagonal tenon).
+  2. Connect left and right rails with 8 bridges (slots on ledge surfaces).
+  3. Place assembled frame in shelf (free-standing, not against walls).
 
 Cross-section (front view, one rail shown):
 
@@ -21,23 +22,19 @@ Cross-section (front view, one rail shown):
     |    |       |
     K-----------J      base bottom (vent slots cut here)
 
-Joint mechanism (front view, two tenons at same angle):
+Frame assembly (top view):
 
-    ┌──┐                      ┌──┐
-    │  │  upper tenon (4mm)   │  │  Y=75.5 (upper ledge)
-    │  C=======D  ╱           │  │
-    │  │       │╱             │  │
-    │  │                      │  │
-    │  │  ~65mm separation    │  │  (twist resistance)
-    │  │                      │  │
-    │  H=======I  ╱           │  │
-    │  │       │╱             │  │
-    K-----------J             │  │  Y=7.5 (base)
-        base tenon (10mm)
-
-    Both tenons tilted 15 degrees in X-Z plane (same angle).
-    Assembly: single push at 15 degrees (forward + toward wall).
-    Two anchor points prevent twisting around any axis.
+    left rail                          right rail
+    body|ledge|                        |ledge|body
+    ┌───┤═════╪════════════════════════╪═════├───┐
+    │   │     │ bridge ①  (Z=5)       │     │   │
+    │   │     │ bridge ②  (Z=80)      │     │   │
+    │   │     │    [joint zone]        │     │   │
+    │   │     │ bridge ③  (Z=178)     │     │   │
+    │   │     │ bridge ④  (Z=253)     │     │   │
+    └───┤═════╪════════════════════════╪═════├───┘
+         58mm  ←──── 130mm gap ────→   58mm
+              ←────── 230mm inner ──────→
 
 Recommended print: body wall flat on bed, 58mm print height, no supports needed.
 """
@@ -61,9 +58,9 @@ shelf_height = 135.0  # mm - internal height
 max_print = 180.0  # mm - build volume per axis
 
 # === Design parameters ===
-body_t = 8.0  # mm - body wall thickness (structural spine against shelf wall)
+body_t = 8.0  # mm - body wall thickness (structural spine)
 ledge_w = 50.0  # mm - ledge extending inward from body (MacBook support)
-ledge_t = 5.0  # mm - ledge platform thickness
+ledge_t = 8.0  # mm - ledge platform thickness (was 5, increased for joint strength)
 foot_h = 10.0  # mm - base foot height (airflow channel under lower MacBook)
 air_gap = 40.0  # mm - gap between MacBooks (ventilation + finger access for removal)
 gusset_reach = 15.0  # mm - gusset extent along upper ledge underside
@@ -72,6 +69,23 @@ rail_depth = 258.0  # mm - total rail depth (178 original + 80mm extension)
 top_ext = 8.0  # mm - body wall extending above upper ledge top surface
 fit_tol = 0.2  # mm - general sliding fit tolerance
 
+# === Frame / bridge parameters ===
+inner_gap = 230.0  # mm - distance between body wall inner faces (MacBook 220 + 5mm x2)
+bridge_bar_w = 16.0  # mm - bridge bar width along Z (wider than tab for Z shoulder)
+bridge_bar_h = 2.0  # mm - bridge bar height (Y, recessed flush into ledge surface)
+bridge_tab_len = 15.0  # mm - tab length in X (how far tab extends onto ledge)
+bridge_tab_w = 10.0  # mm - tab width in Z (narrower than bar, 3mm shoulder each side)
+pocket_wall = 3.0  # mm - min wall thickness between pocket and ledge tip (X direction)
+pocket_floor = 2.0  # mm - solid floor at pocket bottom (prevents falling through)
+
+# === Cantilever snap-fit parameters ===
+cant_t = 1.0  # mm - cantilever arm thickness (X direction, flex)
+cant_clearance = 0.5  # mm - FDM assembly clearance per side
+hook_overhang = 0.4  # mm - hook protrusion (X, deflection ~3.75% strain for PLA)
+hook_h = 1.0  # mm - hook height (Y direction)
+# End bridges: center = bar_w/2 so edges align with rail edges (Z=0, Z=258)
+bridge_z_positions = [8.0, 80.0, 178.0, 250.0]  # Z centers
+
 # === Diagonal tenon joint parameters ===
 tenon_angle = 15.0  # degrees - tenon tilt from Z axis toward +X (locks X and Z axes)
 tenon_length = 12.0  # mm - tenon length along its tilted axis
@@ -79,11 +93,11 @@ tenon_width = 40.0  # mm - tenon width in X direction
 tenon_taper = 0.3  # mm - groove narrows by this much from entry to deep end (wedge)
 tenon_tol_entry = 0.20  # mm - clearance per side at entry (loose, easy start)
 tenon_tol_deep = 0.10  # mm - clearance per side at deep end (tight, friction lock)
-tenon_h_base = 10.0  # mm - base tenon height (fits in 15mm base section)
-tenon_h_upper = 4.0  # mm - upper tenon height (fits in 5mm upper ledge section)
+tenon_h_base = 10.0  # mm - base tenon height (fits in 18mm base section)
+tenon_h_upper = 6.0  # mm - upper tenon height (fits in 8mm upper ledge, was 4mm)
 
 # === Ventilation slots (cut through base foot area) ===
-vent_w = 8.0  # mm - slot width (67% open ratio, was 4mm/33%)
+vent_w = 8.0  # mm - slot width (67% open ratio)
 vent_pitch = 12.0  # mm - slot center-to-center spacing
 vent_margin_x = 8.0  # mm - inset from body inner face and ledge edge
 vent_margin_z = 6.0  # mm - inset from front and back of rail
@@ -102,22 +116,27 @@ rib_width = 3.0  # mm - rib thickness along Z direction
 rib_count = 3  # number of ribs evenly spaced along Z
 
 # === Derived dimensions ===
-base_h = foot_h + ledge_t  # 15 mm - total base section height
-upper_z = base_h + mb_thickness + air_gap  # 73 mm - bottom of upper ledge
-rail_h = upper_z + ledge_t + top_ext  # 86 mm - total rail height
+base_h = foot_h + ledge_t  # 18 mm - total base section height
+upper_z = base_h + mb_thickness + air_gap  # 76 mm - bottom of upper ledge
+rail_h = upper_z + ledge_t + top_ext  # 92 mm - total rail height
 z_split = rail_depth / 2  # 129 mm - split point (equal halves)
 
+# Bridge derived dimensions
+bridge_span = inner_gap - 2 * ledge_w  # 130 mm - gap between ledge tips
+bridge_total_len = bridge_span + 2 * bridge_tab_len  # 160 mm - total bar length
+
 # Tenon extent in global coordinates
-tenon_z_extent = tenon_length * math.cos(math.radians(tenon_angle))  # Z projection
-tenon_x_extent = tenon_length * math.sin(math.radians(tenon_angle))  # X projection
+tenon_z_extent = tenon_length * math.cos(math.radians(tenon_angle))
+tenon_x_extent = tenon_length * math.sin(math.radians(tenon_angle))
 
 # === Validation ===
 part_max_z = z_split + tenon_z_extent + (tenon_width / 2) * math.sin(math.radians(tenon_angle))
-assert part_max_z <= max_print, f"Part depth {part_max_z:.1f} exceeds build volume {max_print}"
+assert part_max_z <= max_print, f"Part depth {part_max_z:.1f} exceeds build volume"
 assert rail_h <= max_print, f"Rail height {rail_h} exceeds build volume {max_print}"
-assert body_t + ledge_w <= max_print, f"Rail width {body_t + ledge_w} exceeds build volume"
-assert rail_h < shelf_height, f"Rail height {rail_h} exceeds shelf height {shelf_height}"
+assert body_t + ledge_w <= max_print, "Rail width exceeds build volume"
+assert rail_h < shelf_height, f"Rail height {rail_h} exceeds shelf height"
 assert upper_z - gusset_drop > base_h, "Gusset overlaps base section"
+assert bridge_total_len <= max_print, f"Bridge {bridge_total_len:.0f} exceeds build volume"
 
 # === Build cross-section profile ===
 # Coordinate system: X = width (outer wall -> ledge), Y = height (base -> top)
@@ -144,17 +163,17 @@ full_rail = cq.Workplane("XY").moveTo(*pts[0]).polyline(pts[1:]).close().extrude
 slot_x_start = body_t + vent_margin_x
 slot_x_end = body_t + ledge_w - vent_margin_x
 
-# Front segment: vent_margin_z to z_split - bridge/2
 slot_front_len = z_split - vent_bridge_z / 2 - vent_margin_z
 slot_front_ctr = vent_margin_z + slot_front_len / 2
-
-# Back segment: z_split + bridge/2 to rail_depth - vent_margin_z
 slot_back_len = rail_depth - vent_margin_z - (z_split + vent_bridge_z / 2)
 slot_back_ctr = z_split + vent_bridge_z / 2 + slot_back_len / 2
 
 cx = slot_x_start
 while cx + vent_w / 2 <= slot_x_end:
-    for s_ctr, s_len in [(slot_front_ctr, slot_front_len), (slot_back_ctr, slot_back_len)]:
+    for s_ctr, s_len in [
+        (slot_front_ctr, slot_front_len),
+        (slot_back_ctr, slot_back_len),
+    ]:
         full_rail = full_rail.cut(
             cq.Workplane("XY")
             .transformed(offset=(cx, foot_h / 2, s_ctr))
@@ -162,26 +181,86 @@ while cx + vent_w / 2 <= slot_x_end:
         )
     cx += vent_pitch
 
-# === Cut body wall ventilation holes (hex grid) ===
-# Holes through body wall (X direction) for MacBook exhaust airflow in clamshell mode.
-# Hex grid pattern maximizes open area while maintaining structural integrity.
-# Exclusion zones: ledge junctions, gusset attachment, tenon area, edges.
+# === Cut bridge snap-fit pockets in ledges ===
+# Blind pocket with undercut groove for cantilever snap-fit.
+# Upper portion: narrow (arm passage with deflection clearance).
+# Lower portion: wider on inner side (hook engagement groove).
+# Solid floor at bottom prevents falling through.
+# Assembly: push bridge down from above, arm deflects, hook snaps into groove.
 
+pocket_depth = ledge_t - pocket_floor  # 6mm deep (2mm floor remains)
+pocket_z = bridge_tab_w + 2 * cant_clearance  # pocket width in Z
+
+# Pocket X dimensions (at ledge tip area)
+pocket_x_main = cant_t + 2 * cant_clearance  # narrow upper: arm + clearance
+pocket_x_groove = hook_overhang + cant_clearance  # groove: extra width for hook
+pocket_x_total = pocket_x_main + pocket_x_groove  # total at hook level
+pocket_x_outer = body_t + ledge_w - pocket_wall  # outer edge position
+
+ledge_y_tops = [
+    base_h,  # lower ledge surface: Y=18
+    upper_z + ledge_t,  # upper ledge surface: Y=84
+]
+
+bar_recess_z = bridge_bar_w + 2 * cant_clearance  # recess width in Z for bar
+
+for y_top in ledge_y_tops:
+    for bz in bridge_z_positions:
+        y_floor = y_top - pocket_depth
+        # Bar recess: shallow cut from ledge tip inward, so bar sits flush.
+        # Must extend to the tip face (X=body_t+ledge_w) for bar entry.
+        recess_x_center = body_t + ledge_w - bridge_tab_len / 2
+        full_rail = full_rail.cut(
+            cq.Workplane("XY")
+            .transformed(
+                offset=(
+                    recess_x_center,
+                    y_top - bridge_bar_h / 2,
+                    bz,
+                )
+            )
+            .box(bridge_tab_len + 0.1, bridge_bar_h + 0.1, bar_recess_z)
+        )
+        # Main pocket (narrow, full depth): arm passage
+        full_rail = full_rail.cut(
+            cq.Workplane("XY")
+            .transformed(
+                offset=(
+                    pocket_x_outer - pocket_x_main / 2,
+                    (y_top + y_floor) / 2,
+                    bz,
+                )
+            )
+            .box(pocket_x_main, pocket_depth + 0.1, pocket_z)
+        )
+        # Hook groove on OUTER wall (tip side) for outward-force resistance
+        groove_height = hook_h + cant_clearance
+        full_rail = full_rail.cut(
+            cq.Workplane("XY")
+            .transformed(
+                offset=(
+                    pocket_x_outer + pocket_x_groove / 2,
+                    y_floor + groove_height / 2,
+                    bz,
+                )
+            )
+            .box(pocket_x_groove, groove_height, pocket_z)
+        )
+
+# === Cut body wall ventilation holes (hex grid) ===
 hole_r = hole_d / 2
 hex_row_spacing = hole_pitch * math.sqrt(3) / 2
 
-# Y exclusion zones: keep solid at structural junctions
 y_exclusions = [
-    (0, hole_margin_y),  # bottom edge
-    (base_h - hole_margin_y, base_h + hole_margin_y),  # lower ledge
+    (0, hole_margin_y),
+    (base_h - hole_margin_y, base_h + hole_margin_y),
     (
         upper_z - gusset_drop - hole_margin_y,
         upper_z + ledge_t + hole_margin_y,
-    ),  # gusset + upper ledge
-    (rail_h - hole_margin_y, rail_h),  # top edge
+    ),
+    (rail_h - hole_margin_y, rail_h),
 ]
 
-# Z exclusion: edges and tenon area
 z_hole_min = hole_margin_z + hole_r
 z_hole_max = rail_depth - hole_margin_z - hole_r
 z_excl_min = z_split - hole_tenon_clearance
@@ -212,15 +291,8 @@ if hole_positions:
     full_rail = full_rail.cut(body_holes)
 
 # === Airflow spacer ribs on body wall inner face ===
-# Vertical ribs protrude inward from body wall, creating a gap between the
-# MacBook exhaust vents and the wall. Hot air rises through the gap via
-# natural convection. Ribs run full height of the body wall.
-# Ribs span only between the two ledge surfaces (Y=base_h to Y=upper_z),
-# where the MacBook edge contacts the wall. Above/below the ledges,
-# the MacBook doesn't touch the wall so no spacer needed.
-
-rib_y_start = base_h  # start at lower ledge surface
-rib_y_end = upper_z + ledge_t  # end at upper ledge top
+rib_y_start = base_h
+rib_y_end = upper_z + ledge_t
 rib_height = rib_y_end - rib_y_start
 rib_z_spacing = rail_depth / (rib_count + 1)
 
@@ -239,26 +311,17 @@ for i in range(rib_count):
     )
 
 # === Diagonal tenon joint ===
-# Two tenons: one in the base section, one in the upper ledge section.
-# Both tilted 15 degrees from Z toward +X (same angle = single assembly motion).
-# Separated by ~65mm vertically for maximum twist resistance.
-# Lock: diagonal geometry prevents pure X or Z separation (primary forces).
-# Wedge: groove tapers more than tongue, creating progressive tightening.
-# Y axis: constrained by rectangular cross-section of tenon/groove.
-
-margin = 2.0  # mm - bounding box overshoot for clean boolean ops
+margin = 2.0
 bb_w = body_t + ledge_w + 2 * margin
 bb_h = rail_h + 2 * margin
 bb_cx = (body_t + ledge_w) / 2
 bb_cy = rail_h / 2
 
-# Tenon X center (shared): middle of the full-width sections
 tenon_cx = (body_t + ledge_w) / 2
 
-# Tenon positions: base section and upper ledge section
 tenon_positions = [
-    (tenon_cy_base := base_h / 2, tenon_h_base),  # Y=7.5, h=10
-    (tenon_cy_upper := upper_z + ledge_t / 2, tenon_h_upper),  # Y=75.5, h=4
+    (tenon_cy_base := base_h / 2, tenon_h_base),
+    (tenon_cy_upper := upper_z + ledge_t / 2, tenon_h_upper),
 ]
 
 
@@ -304,11 +367,88 @@ for cy, th in tenon_positions:
     front_cutter = front_cutter.union(tongue)
     back_cutter = back_cutter.cut(groove)
 
-# Part A: front half + tongue protrusions
 part_front = full_rail.intersect(front_cutter)
-
-# Part B: back half - groove pockets
 part_back = full_rail.intersect(back_cutter)
+
+# === Build bridge bar ===
+# Bar with L-shaped hooks at each end that wrap around the ledge tips.
+# The hooks provide mechanical locking against X-axis forces.
+#
+# Cross-section at each end (X-Y, looking along Z):
+#
+#     ═══════════ bar (on ledge surface)
+#          │
+#          │  vertical (down ledge outer face)
+#          │
+#          └── hook (under ledge, X-lock)
+#
+# Bridge X coords: 0 = left hook outer edge, fl = right hook outer edge
+# Bridge Y coords: 0 = ledge surface level, positive = up
+
+# Bridge: bar with cantilever snap-fit arms at each end.
+# Built as a single XZ profile extruded along Y, then cut to create arms.
+# Arms narrower than bar (Z direction) for shoulder-based Z lock.
+# Assembly: push bridge down onto ledge, arms deflect and snap.
+
+fl = bridge_total_len
+arm_z = bridge_tab_w - 2 * cant_clearance  # arm Z width (narrower than bar)
+arm_depth = pocket_depth - cant_clearance  # arm Y height
+
+# Arm/hook positions
+arm_inset = pocket_wall + cant_clearance  # 3.5mm from bridge edge
+left_arm_cx = arm_inset + cant_t / 2  # 4.0
+right_arm_cx = fl - arm_inset - cant_t / 2  # fl - 4.0
+
+# Build bridge as XZ profile extruded along Y (arm_z width).
+# Profile includes: bar + left arm + left hook + right arm + right hook.
+# Then widen the bar portion to bridge_bar_w using a separate union.
+
+# Step 1: Central bar as a simple box (full width in Y)
+bridge = (
+    cq.Workplane("XY")
+    .transformed(offset=(fl / 2, 0, bridge_bar_h / 2))
+    .box(fl, bridge_bar_w, bridge_bar_h)
+)
+
+# Step 2: Build arms+hooks as a single XZ profile, extruded narrow (arm_z)
+# This avoids union issues by creating one solid per arm.
+for i in range(2):
+    direction = -1 if i == 0 else 1  # outward direction
+    arm_cx = left_arm_cx if i == 0 else right_arm_cx
+    outer_x = arm_cx + direction * (cant_t / 2)
+
+    # Profile: arm rectangle + hook triangle, as one connected polygon
+    # Arm extends from Z=+1 (overlap into bar) to Z=-arm_depth
+    # Hook wedge at bottom extends outward
+    arm_pts = (
+        [
+            (arm_cx - cant_t / 2, 1.0),  # arm top-inner (into bar)
+            (arm_cx + cant_t / 2, 1.0),  # arm top-outer (into bar)
+            (arm_cx + cant_t / 2, -arm_depth + hook_h),  # arm bottom, before hook
+            # Hook ramp (wedge "4" shape)
+            (outer_x + direction * hook_overhang, -arm_depth),  # hook tip
+            (arm_cx - cant_t / 2, -arm_depth),  # hook base / arm inner bottom
+        ]
+        if direction == -1
+        else [
+            (arm_cx + cant_t / 2, 1.0),  # arm top-outer
+            (arm_cx - cant_t / 2, 1.0),  # arm top-inner (into bar)
+            (arm_cx - cant_t / 2, -arm_depth + hook_h),  # arm bottom, before hook
+            # Hook ramp (wedge "4" shape)
+            (outer_x + direction * hook_overhang, -arm_depth),  # hook tip
+            (arm_cx + cant_t / 2, -arm_depth),  # hook base / arm outer bottom
+        ]
+    )
+
+    arm_solid = (
+        cq.Workplane("XZ")
+        .transformed(offset=(0, 0, -arm_z / 2))
+        .moveTo(*arm_pts[0])
+        .polyline(arm_pts[1:])
+        .close()
+        .extrude(arm_z)
+    )
+    bridge = bridge.union(arm_solid)
 
 # === Export ===
 output_dir = Path(__file__).parent / "output"
@@ -316,12 +456,16 @@ output_dir.mkdir(exist_ok=True)
 
 front_path = output_dir / "macbook-stand-front.stl"
 back_path = output_dir / "macbook-stand-back.stl"
+bridge_path = output_dir / "macbook-stand-bridge.stl"
+
 part_front.export(str(front_path))
 part_back.export(str(back_path))
+bridge.export(str(bridge_path))
 
 try:
     show_object(part_front, name="front")  # type: ignore[name-defined]
     show_object(part_back, name="back")  # type: ignore[name-defined]
+    show_object(bridge, name="bridge")  # type: ignore[name-defined]
 except NameError:
     pass
 
@@ -330,15 +474,14 @@ print(f"Split at Z={z_split:.0f} mm")
 print(f"Base tenon: {tenon_width:.0f}x{tenon_h_base:.0f} mm at Y={tenon_cy_base:.1f}")
 print(f"Upper tenon: {tenon_width:.0f}x{tenon_h_upper:.0f} mm at Y={tenon_cy_upper:.1f}")
 print(f"Tenon L={tenon_length:.0f} mm, angle={tenon_angle:.0f} deg")
-print(f"Tenon taper: {tenon_taper:.1f} mm (progressive wedge)")
-print(f"Clearance: {tenon_tol_entry:.2f} mm (entry) -> {tenon_tol_deep:.2f} mm (deep)")
+print(f"Frame inner gap: {inner_gap:.0f} mm (MacBook {mb_depth:.0f} + clearance)")
+print(f"Bridge: {bridge_total_len:.0f} mm (span {bridge_span:.0f} + tabs {bridge_tab_len:.0f}x2)")
+print(f"Bridge positions: {bridge_z_positions} ({len(bridge_z_positions)} per level, x2 levels)")
 print(f"Body wall holes: {len(hole_positions)} x dia {hole_d:.0f} mm (hex grid)")
 print(f"Airflow ribs: {rib_count} x {rib_depth:.1f}mm deep (air gap for exhaust)")
 vent_open_pct = vent_w / vent_pitch * 100
 print(f"Base vent slots: {vent_w:.0f}mm / {vent_pitch:.0f}mm pitch ({vent_open_pct:.0f}% open)")
 print(f"Each part max depth: {part_max_z:.0f} mm (limit: {max_print:.0f} mm)")
-print(f"MacBook front overhang: {mb_depth - rail_depth:.0f} mm (grab point)")
-print(f"USB-C side clearance: {(shelf_width - mb_width) / 2 - body_t:.0f} mm per side")
-print(f"Ceiling clearance: {shelf_height - (upper_z + ledge_t + mb_thickness):.0f} mm")
 print(f"Exported: {front_path}")
 print(f"Exported: {back_path}")
+print(f"Exported: {bridge_path} (print 8 copies)")
