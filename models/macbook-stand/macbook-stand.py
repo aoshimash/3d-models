@@ -83,10 +83,23 @@ tenon_h_base = 10.0  # mm - base tenon height (fits in 15mm base section)
 tenon_h_upper = 4.0  # mm - upper tenon height (fits in 5mm upper ledge section)
 
 # === Ventilation slots (cut through base foot area) ===
-vent_w = 4.0  # mm - slot width
+vent_w = 8.0  # mm - slot width (67% open ratio, was 4mm/33%)
 vent_pitch = 12.0  # mm - slot center-to-center spacing
 vent_margin_x = 8.0  # mm - inset from body inner face and ledge edge
 vent_margin_z = 6.0  # mm - inset from front and back of rail
+vent_bridge_z = 30.0  # mm - solid bridge width at joint (centered on z_split)
+
+# === Body wall ventilation holes (hex grid pattern) ===
+hole_d = 6.0  # mm - hole diameter
+hole_pitch = 10.0  # mm - center-to-center hex grid spacing
+hole_margin_y = 3.0  # mm - clearance from structural Y features
+hole_margin_z = 6.0  # mm - clearance from Z edges
+hole_tenon_clearance = 15.0  # mm - clearance around tenon joint zone
+
+# === Airflow spacer ribs (on body wall inner face) ===
+rib_depth = 2.5  # mm - rib protrusion from body wall inner face (+X direction)
+rib_width = 3.0  # mm - rib thickness along Z direction
+rib_count = 3  # number of ribs evenly spaced along Z
 
 # === Derived dimensions ===
 base_h = foot_h + ledge_t  # 15 mm - total base section height
@@ -127,18 +140,103 @@ pts = [
 full_rail = cq.Workplane("XY").moveTo(*pts[0]).polyline(pts[1:]).close().extrude(rail_depth)
 
 # === Cut ventilation slots through foot area of base ===
+# Slots split into front/back segments with solid bridge at joint for strength.
 slot_x_start = body_t + vent_margin_x
 slot_x_end = body_t + ledge_w - vent_margin_x
-slot_z_len = rail_depth - 2 * vent_margin_z
+
+# Front segment: vent_margin_z to z_split - bridge/2
+slot_front_len = z_split - vent_bridge_z / 2 - vent_margin_z
+slot_front_ctr = vent_margin_z + slot_front_len / 2
+
+# Back segment: z_split + bridge/2 to rail_depth - vent_margin_z
+slot_back_len = rail_depth - vent_margin_z - (z_split + vent_bridge_z / 2)
+slot_back_ctr = z_split + vent_bridge_z / 2 + slot_back_len / 2
 
 cx = slot_x_start
 while cx + vent_w / 2 <= slot_x_end:
-    full_rail = full_rail.cut(
-        cq.Workplane("XY")
-        .transformed(offset=(cx, foot_h / 2, rail_depth / 2))
-        .box(vent_w, foot_h + 0.2, slot_z_len)
-    )
+    for s_ctr, s_len in [(slot_front_ctr, slot_front_len), (slot_back_ctr, slot_back_len)]:
+        full_rail = full_rail.cut(
+            cq.Workplane("XY")
+            .transformed(offset=(cx, foot_h / 2, s_ctr))
+            .box(vent_w, foot_h + 0.2, s_len)
+        )
     cx += vent_pitch
+
+# === Cut body wall ventilation holes (hex grid) ===
+# Holes through body wall (X direction) for MacBook exhaust airflow in clamshell mode.
+# Hex grid pattern maximizes open area while maintaining structural integrity.
+# Exclusion zones: ledge junctions, gusset attachment, tenon area, edges.
+
+hole_r = hole_d / 2
+hex_row_spacing = hole_pitch * math.sqrt(3) / 2
+
+# Y exclusion zones: keep solid at structural junctions
+y_exclusions = [
+    (0, hole_margin_y),  # bottom edge
+    (base_h - hole_margin_y, base_h + hole_margin_y),  # lower ledge
+    (
+        upper_z - gusset_drop - hole_margin_y,
+        upper_z + ledge_t + hole_margin_y,
+    ),  # gusset + upper ledge
+    (rail_h - hole_margin_y, rail_h),  # top edge
+]
+
+# Z exclusion: edges and tenon area
+z_hole_min = hole_margin_z + hole_r
+z_hole_max = rail_depth - hole_margin_z - hole_r
+z_excl_min = z_split - hole_tenon_clearance
+z_excl_max = z_split + hole_tenon_clearance
+
+hole_positions = []
+y = hole_margin_y + hole_r
+row = 0
+while y <= rail_h - hole_margin_y - hole_r:
+    if not any(ylo <= y <= yhi for ylo, yhi in y_exclusions):
+        z_offset = (hole_pitch / 2) if (row % 2 == 1) else 0
+        z = z_hole_min + z_offset
+        while z <= z_hole_max:
+            if not (z_excl_min <= z <= z_excl_max):
+                hole_positions.append((y, z))
+            z += hole_pitch
+    y += hex_row_spacing
+    row += 1
+
+if hole_positions:
+    body_holes = (
+        cq.Workplane("YZ")
+        .transformed(offset=(0, 0, -0.1))
+        .pushPoints(hole_positions)
+        .circle(hole_r)
+        .extrude(body_t + 0.2)
+    )
+    full_rail = full_rail.cut(body_holes)
+
+# === Airflow spacer ribs on body wall inner face ===
+# Vertical ribs protrude inward from body wall, creating a gap between the
+# MacBook exhaust vents and the wall. Hot air rises through the gap via
+# natural convection. Ribs run full height of the body wall.
+# Ribs span only between the two ledge surfaces (Y=base_h to Y=upper_z),
+# where the MacBook edge contacts the wall. Above/below the ledges,
+# the MacBook doesn't touch the wall so no spacer needed.
+
+rib_y_start = base_h  # start at lower ledge surface
+rib_y_end = upper_z + ledge_t  # end at upper ledge top
+rib_height = rib_y_end - rib_y_start
+rib_z_spacing = rail_depth / (rib_count + 1)
+
+for i in range(rib_count):
+    rib_z = rib_z_spacing * (i + 1)
+    full_rail = full_rail.union(
+        cq.Workplane("XY")
+        .transformed(
+            offset=(
+                body_t + rib_depth / 2,
+                rib_y_start + rib_height / 2,
+                rib_z,
+            )
+        )
+        .box(rib_depth, rib_height, rib_width)
+    )
 
 # === Diagonal tenon joint ===
 # Two tenons: one in the base section, one in the upper ledge section.
@@ -234,6 +332,10 @@ print(f"Upper tenon: {tenon_width:.0f}x{tenon_h_upper:.0f} mm at Y={tenon_cy_upp
 print(f"Tenon L={tenon_length:.0f} mm, angle={tenon_angle:.0f} deg")
 print(f"Tenon taper: {tenon_taper:.1f} mm (progressive wedge)")
 print(f"Clearance: {tenon_tol_entry:.2f} mm (entry) -> {tenon_tol_deep:.2f} mm (deep)")
+print(f"Body wall holes: {len(hole_positions)} x dia {hole_d:.0f} mm (hex grid)")
+print(f"Airflow ribs: {rib_count} x {rib_depth:.1f}mm deep (air gap for exhaust)")
+vent_open_pct = vent_w / vent_pitch * 100
+print(f"Base vent slots: {vent_w:.0f}mm / {vent_pitch:.0f}mm pitch ({vent_open_pct:.0f}% open)")
 print(f"Each part max depth: {part_max_z:.0f} mm (limit: {max_print:.0f} mm)")
 print(f"MacBook front overhang: {mb_depth - rail_depth:.0f} mm (grab point)")
 print(f"USB-C side clearance: {(shelf_width - mb_width) / 2 - body_t:.0f} mm per side")
