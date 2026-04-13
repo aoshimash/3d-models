@@ -1,49 +1,55 @@
 # 3D Models
 
-Parametric 3D model repository using CadQuery (Python). Designed for FDM printing on Bambu Lab A1 Mini.
+Parametric 3D model repository for FDM printing on Bambu Lab A1 Mini.
+Multiple CAD tools supported, organized by tool under `models/`.
 
 ## Tech Stack
 
-- **CAD**: CadQuery
-- **Runtime**: Python 3.13+ managed by uv
-- **Lint / Format**: ruff
+- **CAD (CadQuery)**: Python 3.13+ managed by uv, linted with ruff
+- **CAD (JSCAD)**: Node.js, @jscad/modeling + @jscad/stl-serializer
+
 ## Commands
 
 ```bash
-# Environment
+# --- CadQuery (Python) ---
 uv sync                                          # Install dependencies
-uv add <package>                                  # Add a dependency
+uv run python models/cadquery/<name>/<name>.py    # Generate STL
 
-# Run a model script to generate STL
-uv run python models/<name>/<name>.py
-
-# Code quality (always run in this order after writing code)
+# Code quality (always run after writing Python)
 uv run ruff format .
 uv run ruff check --fix .
+
+# --- JSCAD (JavaScript) ---
+cd models/jscad
+npm install                                       # Install dependencies
+node <model-name>/<model-name>.js                 # Generate STL
 ```
 
 ## Rules
 
-### Python Environment
+### Python Environment (CadQuery)
 
 - NEVER use raw `pip`, `pip install`, `python`, or `python3` directly
 - ALL Python operations go through `uv` (`uv run`, `uv add`, `uv sync`)
-
-### Code Quality
-
 - After writing or editing any Python file, always run `ruff format` then `ruff check --fix`
 
 ### Project Structure
 
 ```
 models/
-  <model-name>/
-    <model-name>.py       # CadQuery script (single file per part)
-    output/               # Generated STL files (committed)
-pyproject.toml
+  cadquery/                   # CadQuery (Python) models
+    <model-name>/
+      <model-name>.py         # CadQuery script
+      output/                 # Generated STL files (committed)
+  jscad/                      # JSCAD (JavaScript) models
+    package.json
+    <model-name>/
+      <model-name>.js         # JSCAD script
+      output/                 # Generated STL files (committed)
+pyproject.toml                # Python/CadQuery dependencies
 ```
 
-- One directory per part/model under `models/`
+- One directory per part/model under each tool directory
 - Script filename matches directory name
 - STL output goes to `output/` subdirectory within each model directory
 
@@ -55,15 +61,16 @@ pyproject.toml
 - Use fluent API chaining for shape construction
 - Assign the final shape to `result`
 - Include `show_object(result)` for CQ-editor compatibility (guarded with `try/except NameError`)
-- Each script must be runnable standalone to export STL:
+- Each script must be runnable standalone to export STL
 
-```python
-from pathlib import Path
+### JSCAD Conventions
 
-output_dir = Path(__file__).parent / "output"
-output_dir.mkdir(exist_ok=True)
-result.export(str(output_dir / "<model-name>.stl"))
-```
+- Define all dimensions as constants at the top of the script
+- Add a comment with unit (mm) and purpose for each parameter
+- Use CSG operations: `union()`, `subtract()`, `intersect()`
+- Use explicit `translate()`, `rotate()` for positioning (no implicit coordinate transforms)
+- Each script must be runnable standalone via `node <script>.js` to export STL
+- Use `@jscad/stl-serializer` for binary STL output
 
 ### 3D Printing (Bambu Lab A1 Mini)
 

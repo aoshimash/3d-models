@@ -12,6 +12,9 @@ wheels/
 # direnv
 .direnv/
 
+# Node.js
+node_modules/
+
 # Bambu Studio logs
 log_iotc.txt
 
