@@ -321,17 +321,34 @@ module foot_vents() {
     back_z_max  = rail_depth - vent_margin_z;
 
     for (cx = [x_start + vent_w/2 : vent_pitch : x_end - vent_w/2]) {
-        // Front slot segment
-        if (front_z_max > front_z_min) {
-            translate([cx - vent_w/2, -0.1, front_z_min])
-                cube([vent_w, foot_h + 0.2, front_z_max - front_z_min]);
-        }
-        // Back slot segment
-        if (back_z_max > back_z_min) {
-            translate([cx - vent_w/2, -0.1, back_z_min])
-                cube([vent_w, foot_h + 0.2, back_z_max - back_z_min]);
-        }
+        if (front_z_max > front_z_min)
+            _foot_vent_shape(cx, front_z_min, front_z_max);
+        if (back_z_max > back_z_min)
+            _foot_vent_shape(cx, back_z_min, back_z_max);
     }
+}
+
+// Foot vent with 45° self-supporting top (trapezoid cross-section in XY).
+// When printed in orientation A (body-wall outer face X=0 on bed, world X
+// is print vertical), the vent's ceiling closes gradually from world Y=10
+// side (supported by lower ledge) toward Y=0 side (unsupported), at 45°.
+// No bridging needed.
+//
+// XY polygon:                            Y=10 ┌─────┐
+//   rectangle + triangular slope extension       │     │\
+//                                                │rect │ \  slope (45°)
+//                                                │     │  \
+//                                           Y=0  └─────┴───\
+//                                                X=16  X=24 X=34
+module _foot_vent_shape(cx, z_min, z_max) {
+    translate([0, 0, z_min])
+        linear_extrude(height = z_max - z_min)
+            polygon([
+                [cx - vent_w/2,             -0.1],           // bottom-left
+                [cx + vent_w/2 + foot_h,    -0.1],           // bottom-right (extended for slope)
+                [cx + vent_w/2,              foot_h + 0.1],  // top-right (slope apex)
+                [cx - vent_w/2,              foot_h + 0.1]   // top-left
+            ]);
 }
 
 // ============================================================
