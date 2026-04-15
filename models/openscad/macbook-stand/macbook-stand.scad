@@ -73,11 +73,10 @@ hole_margin_y        = 3;    // mm - Y clearance from ledges/gusset/edges
 hole_margin_z        = 6;    // mm - Z clearance from rail front/back ends
 hole_split_clearance = 15;   // mm - Z clearance around split_z (protect body-wall dovetail)
 
-// --- Foot ventilation slots ---
-// Long slots through the foot along Z axis, providing airflow under lower
-// MacBook and material savings. Split at Z=split_z with solid bridge zone.
-vent_w         = 8;    // mm - slot width (X direction)
-vent_pitch     = 12;   // mm - slot center-to-center spacing in X
+// --- Foot ventilation (single trapezoidal slot per Z-segment) ---
+// One large trapezoidal cavity through the foot along Z axis, split at
+// Z=split_z into front/back halves (with solid zone protecting body-wall
+// dovetail). 45° slope on the ledge-tip side makes it FDM-self-supporting.
 vent_margin_x  = 8;    // mm - X clearance from body wall and ledge tip
 vent_margin_z  = 6;    // mm - Z clearance from rail front/back ends
 vent_bridge_z  = 30;   // mm - solid zone around split_z (protects body-wall dovetail)
@@ -312,42 +311,40 @@ module body_wall_holes() {
 // (so X walls aren't breached) and rail front/back ends.
 
 module foot_vents() {
-    x_start = body_t + vent_margin_x;
-    x_end   = body_t + ledge_w - vent_margin_x;
-
     front_z_min = vent_margin_z;
     front_z_max = split_z - vent_bridge_z / 2;
     back_z_min  = split_z + vent_bridge_z / 2;
     back_z_max  = rail_depth - vent_margin_z;
 
-    for (cx = [x_start + vent_w/2 : vent_pitch : x_end - vent_w/2]) {
-        if (front_z_max > front_z_min)
-            _foot_vent_shape(cx, front_z_min, front_z_max);
-        if (back_z_max > back_z_min)
-            _foot_vent_shape(cx, back_z_min, back_z_max);
-    }
+    if (front_z_max > front_z_min)
+        _foot_vent_shape(front_z_min, front_z_max);
+    if (back_z_max > back_z_min)
+        _foot_vent_shape(back_z_min, back_z_max);
 }
 
-// Foot vent with 45° self-supporting top (trapezoid cross-section in XY).
-// When printed in orientation A (body-wall outer face X=0 on bed, world X
-// is print vertical), the vent's ceiling closes gradually from world Y=10
-// side (supported by lower ledge) toward Y=0 side (unsupported), at 45°.
-// No bridging needed.
+// Single trapezoidal foot vent: full width from near body wall to near
+// ledge tip, with 45° sloped side on the ledge-tip end for self-support.
+// When printed in orientation A (body-wall outer face X=0 on bed), world X
+// is print vertical and the slope closes the cavity gradually, eliminating
+// the bridging / overhang concern entirely. No floating foot strips left.
 //
-// XY polygon:                            Y=10 ┌─────┐
-//   rectangle + triangular slope extension       │     │\
-//                                                │rect │ \  slope (45°)
-//                                                │     │  \
-//                                           Y=0  └─────┴───\
-//                                                X=16  X=24 X=34
-module _foot_vent_shape(cx, z_min, z_max) {
+// XY cross-section:             Y=foot_h ┌────────────────┐
+//                                        │                │\
+//                                        │  vent cavity   │ \  slope 45°
+//                                        │                │  \
+//                                   Y=0  └────────────────┴───\
+//                                        X=x_start    x_end-foot_h  x_end
+module _foot_vent_shape(z_min, z_max) {
+    x_start = body_t + vent_margin_x;
+    x_end   = body_t + ledge_w - vent_margin_x;
+
     translate([0, 0, z_min])
         linear_extrude(height = z_max - z_min)
             polygon([
-                [cx - vent_w/2,             -0.1],           // bottom-left
-                [cx + vent_w/2 + foot_h,    -0.1],           // bottom-right (extended for slope)
-                [cx + vent_w/2,              foot_h + 0.1],  // top-right (slope apex)
-                [cx - vent_w/2,              foot_h + 0.1]   // top-left
+                [x_start,           -0.1],             // bottom-left
+                [x_end,             -0.1],             // bottom-right (slope tip at Y=0)
+                [x_end - foot_h,     foot_h + 0.1],    // top-right (slope base at Y=foot_h)
+                [x_start,            foot_h + 0.1]     // top-left
             ]);
 }
 
