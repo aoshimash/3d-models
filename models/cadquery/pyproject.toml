@@ -1,0 +1,23 @@
+[project]
+name = "3d-models-cadquery"
+version = "0.1.0"
+description = "CadQuery parametric models for FDM printing (Bambu Lab A1 Mini)"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+dependencies = [
+    "cadquery>=2.7.0",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[dependency-groups]
+dev = [
+    "matplotlib>=3.10.8",
+    "numpy-stl>=3.2.0",
+    "ruff>=0.15.10",
+]

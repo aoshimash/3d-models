@@ -6,6 +6,7 @@ Multiple CAD tools supported, organized by tool under `models/`.
 ## Tech Stack
 
 - **CAD (CadQuery)**: Python 3.13+ managed by uv, linted with ruff
+- **CAD (build123d)**: Python 3.13+ managed by uv, linted with ruff
 - **CAD (JSCAD)**: Node.js, @jscad/modeling + @jscad/stl-serializer
 - **CAD (OpenSCAD)**: OpenSCAD nightly + BOSL2 library
 
@@ -13,10 +14,18 @@ Multiple CAD tools supported, organized by tool under `models/`.
 
 ```bash
 # --- CadQuery (Python) ---
-uv sync                                          # Install dependencies
-uv run python models/cadquery/<name>/<name>.py    # Generate STL
+# CadQuery has its OWN uv project under models/cadquery/ (isolated venv)
+cd models/cadquery
+uv sync                                           # Install dependencies (first time)
+uv run python <name>/<name>.py                    # Generate STL
+uv run ruff format .
+uv run ruff check --fix .
 
-# Code quality (always run after writing Python)
+# --- build123d (Python) ---
+# build123d has its OWN uv project under models/build123d/ (isolated venv)
+cd models/build123d
+uv sync                                           # Install dependencies (first time)
+uv run python <name>/<name>.py                    # Generate STL
 uv run ruff format .
 uv run ruff check --fix .
 
@@ -32,19 +41,35 @@ node <model-name>/<model-name>.js                 # Generate STL
 
 ## Rules
 
-### Python Environment (CadQuery)
+### Python Environments (CadQuery / build123d)
 
+- Each Python-based CAD tool has its OWN uv project (isolated venv, separate dependencies):
+  - CadQuery: `models/cadquery/pyproject.toml`
+  - build123d: `models/build123d/pyproject.toml`
+- There is NO root-level `pyproject.toml` — always `cd` into the tool directory before running uv commands
 - NEVER use raw `pip`, `pip install`, `python`, or `python3` directly
 - ALL Python operations go through `uv` (`uv run`, `uv add`, `uv sync`)
-- After writing or editing any Python file, always run `ruff format` then `ruff check --fix`
+- After writing or editing any Python file, always run `ruff format` then `ruff check --fix` inside the corresponding project directory
 
 ### Project Structure
 
 ```
 models/
-  cadquery/                   # CadQuery (Python) models
+  cadquery/                   # CadQuery (Python) — independent uv project
+    pyproject.toml            # CadQuery-specific dependencies
+    .python-version           # pinned to 3.13 (cadquery-ocp has no 3.14 wheel)
+    uv.lock
+    .venv/                    # not committed
     <model-name>/
       <model-name>.py         # CadQuery script
+      output/                 # Generated STL files (committed)
+  build123d/                  # build123d (Python) — independent uv project
+    pyproject.toml            # build123d-specific dependencies
+    .python-version           # pinned to 3.13
+    uv.lock
+    .venv/                    # not committed
+    <model-name>/
+      <model-name>.py         # build123d script
       output/                 # Generated STL files (committed)
   jscad/                      # JSCAD (JavaScript) models
     package.json
@@ -55,8 +80,9 @@ models/
     <model-name>/
       <model-name>.scad       # OpenSCAD script (uses BOSL2)
       output/                 # Generated STL files (committed)
-pyproject.toml                # Python/CadQuery dependencies
 ```
+
+No root-level `pyproject.toml` / `uv.lock` — each CAD tool is self-contained.
 
 - One directory per part/model under each tool directory
 - Script filename matches directory name
@@ -71,6 +97,15 @@ pyproject.toml                # Python/CadQuery dependencies
 - Assign the final shape to `result`
 - Include `show_object(result)` for CQ-editor compatibility (guarded with `try/except NameError`)
 - Each script must be runnable standalone to export STL
+
+### build123d Conventions
+
+- Define all dimensions as module-level constants at the top of the script (never hardcode inline)
+- Add a comment with unit (mm) and purpose for each parameter
+- Explicitly define print tolerances as parameters (e.g., `FIT_TOLERANCE = 0.2  # mm`)
+- Prefer the Builder API (`with BuildPart() as part:` / `Box(...)` / `extrude(...)`) over direct algebra for readability
+- Extract the final shape via `part.part` and export with `export_stl(part.part, "output/<name>.stl")`
+- Each script must be runnable standalone via `uv run python <script>.py` to export STL
 
 ### JSCAD Conventions
 

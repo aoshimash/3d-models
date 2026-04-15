@@ -1,12 +1,12 @@
 [project]
-name = "3d-models"
+name = "3d-models-build123d"
 version = "0.1.0"
-description = "Parametric 3D models for FDM printing (Bambu Lab A1 Mini)"
+description = "build123d parametric models for FDM printing (Bambu Lab A1 Mini)"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.13"
 dependencies = [
-    "cadquery>=2.7.0",
+    "build123d>=0.9.0",
 ]
 
 [tool.ruff]
@@ -17,6 +17,6 @@ select = ["E", "F", "W", "I"]
 
 [dependency-groups]
 dev = [
-    "matplotlib>=3.10.8",
-    "numpy-stl>=3.2.0",
+    "ocp-vscode>=3.3.4",
+    "ruff>=0.15.10",
 ]

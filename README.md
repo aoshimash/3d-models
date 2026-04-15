@@ -19,7 +19,7 @@ All dimensions are parameterized — tweak the variables at the top of each scri
 
 ### Prerequisites
 
-- **CadQuery models:** Python 3.13+ and [uv](https://docs.astral.sh/uv/)
+- **CadQuery / build123d models:** Python 3.13+ and [uv](https://docs.astral.sh/uv/) (each tool has its own uv project under `models/<tool>/`)
 - **JSCAD models:** Node.js
 - **OpenSCAD models:** [OpenSCAD](https://openscad.org/) (nightly recommended) with the [BOSL2](https://github.com/BelfrySCAD/BOSL2) library installed
 
@@ -30,17 +30,23 @@ git clone https://github.com/aoshimash/3d-models.git
 cd 3d-models
 
 # CadQuery
-uv sync
+(cd models/cadquery && uv sync)
+
+# build123d
+(cd models/build123d && uv sync)
 
 # JSCAD
-cd models/jscad && npm install && cd ../..
+(cd models/jscad && npm install)
 ```
 
 ### Generate STL
 
 ```bash
 # CadQuery
-uv run python models/cadquery/<model-name>/<model-name>.py
+(cd models/cadquery && uv run python <model-name>/<model-name>.py)
+
+# build123d
+(cd models/build123d && uv run python <model-name>/<model-name>.py)
 
 # JSCAD
 node models/jscad/<model-name>/<model-name>.js
