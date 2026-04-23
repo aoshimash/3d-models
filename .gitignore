@@ -18,3 +18,6 @@ node_modules/
 # Bambu Studio logs
 log_iotc.txt
 
+# Derivative STL of a MakerWorld Standard Digital File License model.
+# The original model forbids redistributing derivatives; keep local only.
+models/build123d/poop-bucket-no-holes/output/
