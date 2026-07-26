@@ -1,10 +1,10 @@
-"""140 mm cube waste bin with a drop-in frame that holds a poly bag.
+"""140 x 140 x 160 mm waste bin with a drop-in frame that holds a poly bag.
 
 Two parts:
 
-- **bin** — open-top box, 140 x 140 x 137 mm, rounded vertical corners.
+- **bin** — open-top box, 140 x 140 x 157 mm, rounded vertical corners.
 - **frame** — a short ring that drops into the mouth. Its 3 mm flange rests on the
-  rim, so bin + frame is exactly 140 x 140 x 140 mm.
+  rim, so bin + frame is exactly 140 x 140 x 160 mm.
 
 How the bag is held
 -------------------
@@ -42,19 +42,24 @@ At R60 only 20 mm of straight wall is left per side. The radius is free up to
 SIZE / 2 = 70, which is a plain cylinder and the floor of what rounding can do:
 440 mm, and only 17 mm less than here. Girth is nearly spent as a lever.
 
-What it costs is capacity, and by now that is not nothing: 2.10 L against the
-2.49 L of a sharp-cornered box, 0.30 L of it given up between R30 and R60.
+What it costs is capacity, and by now that is not nothing: 2.41 L against the
+2.86 L of a sharp-cornered box, 0.34 L of it given up between R30 and R60.
+
+Girth is set by the rim and does not care how tall the bin is, but depth does: the
+bag has to reach 155 mm down and still have enough left to fold back over the rim.
+A bag that only just made it at 135 mm deep may not.
 
 Print notes
 -----------
 - Both parts print exactly as modelled, flat on the bed, no supports.
   The frame is modelled flange-down / skirt-up (its printing orientation); it is
   used the other way up.
-- ~225 g of filament for the bin, ~40 g for the frame. Walls are 2 mm, so set
+- ~220 g of filament for the bin, ~35 g for the frame. Walls are 2 mm, so set
   5 perimeters and 0 % infill — the parts are all perimeter anyway.
-- Layer height 0.2 mm. A brim helps on the 137 mm-tall body.
-- Bed: 140 mm square on the A1 Mini's 180 mm plate, and 137 mm tall against a
-  180 mm Z. It fits, but nothing is spare — level the bed first.
+- Layer height 0.2 mm. A brim helps on the 157 mm-tall body.
+- Bed: 140 mm square on the A1 Mini's 180 mm plate, and 157 mm tall against a
+  180 mm Z — 23 mm of headroom. Level the bed first; at this height a lifting
+  corner is a failed print, not a blemish.
 """
 
 from math import pi
@@ -81,7 +86,7 @@ except ImportError:
 
 # --- Overall envelope (mm) — the specification ---
 SIZE = 140.0  # X/Y — outer footprint
-TOTAL_HEIGHT = 140.0  # Z — bin plus the seated frame flange
+TOTAL_HEIGHT = 160.0  # Z — bin plus the seated frame flange
 
 # --- Bin (mm) ---
 WALL_THICKNESS = 2.0  # 5 perimeters at 0.4 mm nozzle
