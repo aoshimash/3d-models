@@ -140,6 +140,11 @@ Fit tests (print these first, they are cheap)
   hole (push the PSU plug through) and one pillar top with the Ø3.2 stub
   hole: set one corner of the Pi assembly on it, nut down, and check the
   thread stub drops in and the nut sits flat.
+- fit-test-pillars.stl : the four real pillars at the real 58 x 49 pitch
+  on a thin plate — the box floor without the walls. Set the whole Pi
+  assembly on it, nuts down: all four stubs must drop in together, the
+  nuts sit flat, the GPIO/PoE headers clear the pillars, and the fan
+  face ends up 10 mm above the plate.
 
 Print notes
 -----------
@@ -756,6 +761,29 @@ with BuildPart() as test_lid_builder:
     extrude(amount=1 + GROOVE_DEPTH, mode=Mode.SUBTRACT)
 test_lid = test_lid_builder.part
 
+# Pillar jig: the real pillars at the real pitch on a thin plate
+TEST_JIG_PLATE_T = 2.0
+TEST_JIG_MARGIN = 6.0  # plate beyond the pillar centres
+with BuildPart() as jig_builder:
+    Box(
+        PI_HOLE_PITCH_X + 2 * TEST_JIG_MARGIN,
+        PI_HOLE_PITCH_Y + 2 * TEST_JIG_MARGIN,
+        TEST_JIG_PLATE_T,
+        align=(Align.CENTER, Align.CENTER, Align.MIN),
+    )
+    jig_holes = [
+        (sx * PI_HOLE_PITCH_X / 2, sy * PI_HOLE_PITCH_Y / 2) for sx in (-1, 1) for sy in (-1, 1)
+    ]
+    with BuildSketch(Plane.XY.offset(TEST_JIG_PLATE_T)):
+        with Locations(*jig_holes):
+            Circle(radius=STANDOFF_DIA / 2)
+    extrude(amount=STANDOFF_H)
+    with BuildSketch(Plane.XY.offset(TEST_JIG_PLATE_T + STANDOFF_H)):
+        with Locations(*jig_holes):
+            Circle(radius=STUB_HOLE_DIA / 2)
+    extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
+test_jig = jig_builder.part
+
 assert POWER_HOLE_Z + POWER_HOLE_H / 2 < TEST_RABBET_H - LIP_HEIGHT - 2.0, "test hole hits the lip"
 assert TEST_RABBET_FLOOR + TEST_PILLAR_H < TEST_RABBET_H - LIP_HEIGHT, "test pillar hits the lid"
 
@@ -774,7 +802,8 @@ if __name__ == "__main__":
     export_stl(test_cup, str(OUTPUT_DIR / "fit-test-puck-cup.stl"))
     export_stl(test_box, str(OUTPUT_DIR / "fit-test-joint-box.stl"))
     export_stl(test_lid, str(OUTPUT_DIR / "fit-test-joint-lid.stl"))
-    print(f"Exported box / lid / assembly-preview / 4 fit tests to: {OUTPUT_DIR}")
+    export_stl(test_jig, str(OUTPUT_DIR / "fit-test-pillars.stl"))
+    print(f"Exported box / lid / assembly-preview / 5 fit tests to: {OUTPUT_DIR}")
 
     box_cm3 = box_part.volume / 1000
     lid_cm3 = lid_part.volume / 1000
@@ -793,7 +822,7 @@ if __name__ == "__main__":
     print(f"  pillars:    {STANDOFF_H:.1f} mm tall, fan face at z={FAN_FACE_Z:.1f}")
     print(f"  Pi rests:   on its 4 nuts, {PI_FOOT_H:.1f} mm below the board face")
     print("  Pi screws:  4 x M2.5 x 6 from the solder side (replace the long brass standoffs)")
-    tests = [test_collar, test_cup, test_box, test_lid]
+    tests = [test_collar, test_cup, test_box, test_lid, test_jig]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
     print(f"  plug room:  USB-C {usbc_room:.1f} mm, USB-A {usb_a_room:.1f} mm")
     hole = f"{POWER_HOLE_W:.1f} x {POWER_HOLE_H:.1f} mm"
