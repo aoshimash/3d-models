@@ -1,187 +1,145 @@
-"""Smart-speaker case: Jabra Speak2 40 flush in the top, Raspberry Pi 4 B hung below.
+"""Smart-speaker case: a Ø142 cylinder with the Jabra Speak2 40 flush in the top
+and a Raspberry Pi 4 B hung face-down below it.
 
-Two parts, no hardware between them:
+Two printed parts, no hardware between them:
 
-- box.stl : open-top box. Four tall standoffs carry the Pi 4 *component side
-  down*, so the low-profile ICE-tower cooler on its SoC hangs under the board
-  with its fan facing the floor. Both USB plugs live inside the box: the
-  Jabra's USB-A adapter at the -X end of the Pi, the PSU's USB-C plug on the
-  -Y side, with only the thin power cable leaving through a hole in the back
-  wall at floor level.
-- lid.stl : thick slab with the same footprint as the box, so the sides run
-  flush from floor to top with only a hairline seam. A lip left standing on
-  the inside of the box wall engages a groove in the lid's underside.
-  A round pocket in its top face takes the whole height of the Jabra puck, so
-  the puck's top ends up flush with the lid. The pocket floor is a ring that
+- box.stl : open-top cylinder. Four pillars from the floor carry the Pi 4
+  *component side down*, so the low-profile ICE-tower cooler on its SoC hangs
+  under the board with its fan facing the floor. Both USB plugs live inside
+  on right-angle adapters; only the thin power cable leaves through a hole in
+  the back wall at floor level.
+- lid.stl : thick disc with the same diameter as the box, so the side runs
+  flush from floor to top with one hairline seam. A lip left standing on the
+  inside of the box wall engages an annular groove in the lid's underside.
+  A round pocket in the top takes the whole height of the Jabra puck, so the
+  puck's top ends up flush with the lid. The pocket floor is a ring that
   carries the puck's base, with one radial slot for the cable.
+
+Why a cylinder, and why Ø142
+----------------------------
+The puck is Ø120, so a round case reads as the speaker itself, only taller.
+What used to force a 160 x 134 box was not the Pi (85 x 56, diagonal 102)
+but the two plugs sticking straight out of it: 60 mm for the Jabra's USB-A
+adapter and 50 mm for the PSU's USB-C plug. With a right-angle adapter on
+each port (user's, ~10 mm thick, cable turned 90°) each arm is 12 mm deep
+and runs along the board edge instead, and the Pi plus both arms fits in a
+Ø127 circle. The box interior is Ø134.8 (3.6 mm wall), leaving ~4 mm.
+
+The Pi sits off-centre: its USB-A end toward -X, microSD end toward +X,
+USB-C edge toward the back (-Y), GPIO edge toward the front. PI_CENTRE is
+the one placement number; the assert below checks every protruding corner
+against the wall.
 
 The Jabra puck, as it actually is
 ---------------------------------
-The Speak2 40 is not a plain cylinder (Jabra's product renders, confirmed and
-measured by the user): the top 7.5 mm of the side is a straight Ø120 band
-carrying the buttons and LED ring, and below that the side slopes inward to a
-Ø91.5 base. The base is a flat rubber ring (the central Ø51 is recessed by a
-negligible 0.01 mm). The integrated Ø3.5 cable is wound in that conical
-groove for transport and leaves the cone 8 mm above the base; its plug end is
+Measured by the user: a straight Ø120 band for the top 7.5 mm (buttons and
+LED ring), then the side slopes inward to a Ø91.5 base, which is a flat
+rubber ring. The integrated Ø3.5 cable is wound in that conical groove for
+transport and leaves the cone 8 mm above the base; its plug end is
 8.5 x 6.5 mm.
 
 How the puck is held and where the cable goes
 ---------------------------------------------
-- Sideways: the straight Ø120 band is located by the Ø123 pocket wall
-  (1.5 mm per side) at the mouth of the pocket. The cone below does not
-  touch anything.
+- Sideways: the straight band is located by the Ø121.4 pocket wall (0.7 mm
+  per side — 1.5 felt loose in the collar test, which printed to size).
 - Vertically: the rubber ring of the base sits on the pocket floor ring,
-  which reaches RING_OVERLAP (8 mm) in under the base rim; the opening
-  inside the ring is Ø75.5. The puck is held by its own 245 g; the pocket is
-  32.5 mm deep so it cannot be knocked out.
-- Cable: unwound from the groove, it leaves the cone and runs down the
-  15.75 mm wide annular gap between cone and pocket wall, then through a
-  10 mm wide radial slot in the ring (pointing -Y, toward the back of the
-  box) into the box. The slot opens into the Ø75.5 hole, so the plug end is
-  passed through the hole and the cable slid sideways into the slot. Rotate
-  the puck so its cable exit sits over the slot; nothing is visible from
-  outside.
+  which reaches 8 mm in under the base rim; the opening inside is Ø75.5.
+- Cable: it leaves the cone, runs down the annular gap between cone and
+  pocket wall, then through a 10 mm wide radial slot in the ring (pointing
+  -Y, toward the back) into the box. The slot opens into the Ø75.5 hole, so
+  the plug end goes through the hole and the cable slides sideways into the
+  slot. Rotate the puck so its cable exit sits over the slot.
 - Removal: lift the lid off (the puck comes with it), push the puck up from
-  below through the Ø75.5 opening.
+  below through the opening.
 
 Why the Pi hangs upside down
 ----------------------------
-The Pi already carries its own CPU cooler (heat-pipe tower with a 40 mm fan on
-top), so the case needs no fan of its own. What the case has to decide is
-which way that fan points, because the Jabra's four microphones sit on top of
-the stack and must not hear it. Flat, fan up, puts the fan 10 mm under the
-lid right below the puck. On edge, fan sideways, points the USB-C receptacle
-up or down and the plug no longer fits. Face down, fan toward the floor (this
-design) puts the fan at the bottom of the box, pointing at the floor plate
-and the desk, with the Pi board, the lid and the puck's body between it and
-the mics, and costs nothing in height.
+The Pi carries its own CPU cooler (heat-pipe tower, 40 mm fan on top), so the
+case needs no fan. Face down, the fan points at the floor plate and the
+desk, with the Pi board, the lid and the puck's body between it and the four
+microphones on top; flat it would blow at the lid 10 mm under the puck, and
+on edge the USB-C receptacle would point up or down. Heat does not care: the
+fan forces air through the fins either way, and the heat pipes' ~15 mm of
+rise against gravity is nothing at a Pi's <10 W. Warm air off the fins
+rises to the exhaust slots high in the wall; the fan draws fresh air through
+intake slots at floor level.
 
-Heat: a tower cooler does not care which way is up — the fan forces the air
-through the fins either way. The heat pipes work slightly against gravity but
-on two short pipes with ~15 mm of rise and a Pi's <10 W that is not
-measurable. Warm air off the fins rises to the exhaust slots high in the -X
-wall; the fan draws fresh air through intake slots at floor level in the +X
-wall, 40 mm from the fan.
+How the Pi is held
+------------------
+At each corner hole the cooler kit stacks, from the component face outward,
+a 6 mm brass standoff, the 1.5 mm bracket plate, an M2.5 nut (4.9 mm across
+flats) and 2.4 mm of thread stub (all measured). Face down this stack hangs
+below the board and the nut is the lowest flat surface — so the nut is what
+each pillar carries: the pillar top is flat at the nut's face with a Ø3.2
+hole that the thread stub drops into, locating the Pi sideways. Nothing
+wider is possible: the official drawing puts the GPIO and PoE header bodies
+3.6 mm and the board edge 3.5 mm from the hole centres. The pillar top sits
+1 mm below the 8.5 mm GPIO header. The kit's long brass standoffs on the
+solder side would hit the lid: replace them with M2.5 x 6 screws from the
+solder side into the 6 mm standoffs. The Pi is held down by its own weight
+and cannot lift more than ~1.5 mm before meeting the lid.
 
-Layout (box, looking down, origin at the box centre)
-----------------------------------------------------
-Flipping the board mirrors it: USB-C/HDMI edge faces -Y (the back), the GPIO
-header faces +Y, the microSD end is at +X and the USB-A / Ethernet end at -X.
-The Pi is pushed to the +Y half so the back half of the box, where the puck's
-cable comes down and the power plug sits, is clear of it.
+Walls (angles seen from above, +X = 0°, +Y = 90° = front)
+---------------------------------------------------------
+- Intake: 11 vertical slots at floor level centred on 0° (+X, microSD end).
+- Exhaust: 12 vertical slots high up centred on 180° (-X, USB-A end).
+- Power cable hole: 13.5 x 9 mm at floor level at -90° (back). The USB-C
+  plug is pushed through it from outside during assembly, then onto the
+  right-angle adapter on the receptacle; the plug body lies along the back
+  edge of the board.
+- Front (+90°) closed.
+- The Jabra's USB-A adapter plugs into a right-angle adapter on the Pi's
+  USB 3.0 stack and lies along the -X end of the board toward the back.
+  Cable slack coils on the floor under the hanging board; keep it out of
+  the ~40 mm square under the fan.
 
-- -Y (back) wall: one 14 x 9 mm hole at floor level for the power cable. The
-  USB-C plug is pushed through it from outside during assembly, then plugged
-  into the receptacle, which hangs just under the board 88 mm from the wall
-  (the user measured that the plug plus its bend needs 50 mm).
-- -X wall: the Jabra's USB-A adapter plugs into the Pi's USB stack and runs
-  toward this wall; 60 mm from the port face to the wall, as measured.
-  A row of exhaust slots high up.
-- +X wall: a row of intake slots at floor level, under the microSD end,
-  feeding the gap under the fan.
-- +Y (front) wall: closed.
-- Cable storage: the back half of the floor takes the coiled Jabra cable.
-  Keep it out of the ~40 mm square under the fan.
-- microSD slot ends up facing *up* at the +X end: lift the lid and it is
-  reachable without unscrewing anything.
+Flush joint
+-----------
+The top 4 mm of the box wall is stepped: the outer 2 mm is cut away to a
+ledge, the inner 1.6 mm stays as a lip. The lid is the full Ø142; its
+underside carries a 2.1 mm wide, 4.3 mm deep annular groove that the lip
+enters with 0.25 mm per side (fit confirmed on a 50 mm test pair), and its
+outer rim sits on the ledge. The lid cannot slide, only lift, and being
+round it goes on at any angle; only the cable slot direction (toward the
+back) matters.
 
-Lid
----
-- Pocket Ø123 x 32.5 deep; the puck stands 0.5 mm proud of the lid so its
-  buttons never sit below the rim. Set PUCK_PROUD to 0 for dead flush.
-- Flush joint: the top 4 mm of the box wall is stepped — the outer 2 mm is
-  cut away to a ledge, the inner 1.6 mm stays as a lip. The lid is the full
-  160 x 134 mm footprint as the box; its underside carries a 2.1 mm wide, 4.3 mm deep groove
-  that the lip enters with 0.25 mm per side, and its outer 1.7 mm rim sits
-  on the ledge. Outside you see one seam line 55 mm up; the lid cannot
-  slide, only lift (it is lifted by its edge, 34.9 mm tall). Being square
-  with a central pocket it goes on in any of the four orientations; only
-  the cable slot direction (toward the back) matters.
-- The lid prints pocket-up on its flat underside; the groove is a 2.1 mm
-  bridge on the bed side and needs no support.
-
-Fits
-----
-- Pi: at each corner hole the cooler kit stacks, from the component face
-  outward, a 6 mm brass standoff, the 1.5 mm bracket plate, an M2.5 nut
-  (4.9 mm across flats) and 2.4 mm of thread stub (all measured). With
-  the board face down this stack hangs below the board, and the nut is the
-  lowest flat surface — so the nut is what the pillar carries. Each pillar
-  top is flat at the nut's face with a Ø3.2 hole that the thread stub drops
-  into; the stub locates the Pi sideways. No screws into the pillars.
-  Nothing wider is possible: the official drawing puts the GPIO and PoE
-  header bodies 3.6 mm and the board edge 3.5 mm from the hole centres, so
-  there is no room for a ring around the nut. The pillar top sits 1 mm
-  below the 8.5 mm GPIO header, clear of it.
-- The kit's long brass standoffs on the solder side would hit the lid.
-  Replace them with M2.5 x 6 screws from the solder side into the 6 mm
-  standoffs; only those screw heads then stand above the solder side
-  (BOARD_TOP_CLEARANCE is 4 mm). The Pi assembly is held down by its own
-  weight and cannot lift more than ~1.5 mm before meeting the lid.
-- PI_ASSEMBLY_H (38 mm) is the user's measurement of the bare Pi + cooler,
-  board solder side to the face of the fan, no base plate. The pillar
-  height is derived from it so the fan ends up exactly FAN_FLOOR_GAP above
-  the floor.
-- Power cable hole is 13.5 x 9 mm for the measured 11.5 x 7 mm USB-C plug
-  overmould (1 mm per side).
-
-Fit tests (print these first, they are cheap)
----------------------------------------------
-- fit-test-puck-collar.stl : an 8 mm tall ring of the Ø123 pocket mouth.
-  Slip it over the puck's straight band from the top: it should drop on
-  freely and locate the puck without rattling much.
-- fit-test-puck-cup.stl : the pocket floor — the Ø75.5 ring with the
-  cable slot — plus 8 mm of wall. Set the puck on it: the rubber ring of
-  the base must sit on the ring, and the cable must reach the slot.
-- fit-test-joint-box.stl / fit-test-joint-lid.stl : a 50 mm square box
-  and lid with the real wall, ledge, lip, groove, corner radius and 0.25 mm
-  clearance. The lid should drop onto the box without force, sit flush on
-  all four sides and not slide. The box also carries the 13.5 x 9 mm power
-  hole (push the PSU plug through) and one pillar top with the Ø3.2 stub
-  hole: set one corner of the Pi assembly on it, nut down, and check the
-  thread stub drops in and the nut sits flat.
-- fit-test-pillars.stl : the four real pillars at the real 58 x 49 pitch
-  on a thin plate — the box floor without the walls. Set the whole Pi
-  assembly on it, nuts down: all four stubs must drop in together, the
-  nuts sit flat, the GPIO/PoE headers clear the pillars, and the fan
-  face ends up 10 mm above the plate.
+Fit tests (all but the round joint pair already printed and passed)
+--------------------------------------------------------------------
+- fit-test-puck-collar.stl : 8 mm ring of the Ø121.4 pocket mouth.
+- fit-test-puck-cup.stl : the pocket floor ring with the cable slot + 8 mm
+  of wall; the puck must sit on the ring and the cable reach the slot.
+- fit-test-pillars.stl : the four real pillars at the real pitch on a
+  plate; the whole Pi assembly sits on it, nuts down.
+- fit-test-joint-box.stl / fit-test-joint-lid.stl : Ø60 box and lid with
+  the real wall, ledge, lip, groove and clearance — the square version of
+  this pair fit perfectly; this one only adds the curvature.
 
 Print notes
 -----------
-- Box: 160 x 134 x 59 mm, open side up, no supports. The slots and the
-  cable hole are short bridges; the pillars are plain, with a small hole
-  in the top.
-- Lid: 160 x 134 x 34.9 mm, pocket side up, flat on the bed, no
-  supports. The rim around the pocket is a solid block in the model and
-  prints as walls plus infill; 15 % is plenty.
-- 160 mm on a 180 mm bed leaves room for a brim. 3 walls, 0.2 mm layers.
-
-Preview
--------
-assembly-preview.stl (do not print) carries stand-ins for every part in its
-working position: the stepped puck, the Pi with its ports, header, cooler and
-fan, both USB plugs and schematic runs of both cables. PREVIEW_PARTS lists
-them by name for drawing scripts.
+- Box: Ø142 x 59 mm, open side up, brim, no supports.
+- Lid: Ø142 x 34.9 mm, pocket side up, flat on the bed, no supports. The
+  rim around the pocket is solid in the model and prints as walls plus
+  infill; 15 % is plenty.
+- 3 walls, 0.2 mm layers.
 
 Sources
 -------
-- Jabra Speak2 40 tech sheet (Rev B, 24 Apr 2023): main unit Ø120 x 33 mm,
-  245 g, integrated USB cable ca. 80 cm. Side profile from the product-page
-  renders; band 7.5 mm, base Ø91.5, cable exit 8 mm up, cable Ø3.5 and
-  plug 8.5 x 6.5 mm measured by the user.
+- Jabra Speak2 40 tech sheet (Rev B, 24 Apr 2023): Ø120 x 33 mm, 245 g,
+  integrated USB cable ca. 80 cm. Band 7.5 mm, base Ø91.5, cable exit 8 mm
+  up, cable Ø3.5, plug 8.5 x 6.5 mm measured by the user.
 - Raspberry Pi 4 mechanical drawing (RP-008343): 85 x 56, holes Ø2.7 at
   3.5 mm from the edges on a 58 x 49 pitch, USB-C centre 11.2 mm from the
   microSD end, HDMI at 26 and 39.5, SoC at (32.5, 25.75), USB stacks at
   9 and 27 from the USB-C edge (Z 16.0), Ethernet at 45.75 (Z 13.5),
   GPIO header Z 8.5.
-- Cooler: user's own low-profile ICE-tower type, 40 mm fan on top; 38 mm
-  from board underside to fan face, 6 mm corner standoffs, 1.5 mm bracket,
-  nuts 4.9 mm across flats with 2.4 mm of thread stub, measured by the
-  user without the plate. Nut height 2 mm assumed (standard M2.5).
-- Plug clearances: 50 mm (USB-C) and 60 mm (USB-A), PSU plug overmould
-  11.5 x 7 mm, measured by the user.
+- Cooler: user's low-profile ICE-tower type; 38 mm board underside to fan
+  face, 6 mm standoffs, 1.5 mm bracket, nuts 4.9 mm AF, 2.4 mm stub,
+  measured. Nut height 2 mm assumed (standard M2.5).
+- Right-angle USB-A and USB-C adapters: ~10 mm thick, measured by the user.
+  PSU plug overmould 11.5 x 7 mm.
 """
 
+from math import cos, hypot, radians, sin
 from pathlib import Path
 
 from build123d import (
@@ -195,11 +153,11 @@ from build123d import (
     Cone,
     Cylinder,
     GeomType,
+    Location,
     Locations,
     Mode,
     Plane,
     Pos,
-    RectangleRounded,
     Solid,
     Sphere,
     Vector,
@@ -245,6 +203,7 @@ PI_GPIO_X0 = 7.1  # header start, preview only
 PI_GPIO_Y = 51.2  # header centre line, preview only
 PI_GPIO_H = 8.5
 PI_PORT_OVERHANG = 3.0  # USB-A stacks past the board edge
+PI_USBC_OVERHANG = 1.3  # USB-C receptacle past the board edge
 PI_SD_OVERHANG = 2.5  # microSD card past the board edge
 PI_SOC_X = 32.5
 PI_SOC_Y = 25.75
@@ -258,47 +217,47 @@ SCREW_HEAD_H = 2.5  # M2.5 pan head on the solder side, preview only
 COOLER_SIZE = 40.0  # fan / fin stack footprint, preview only
 COOLER_FAN_T = 10.0  # fan frame depth, preview only
 
-# --- Plugs (mm) ---
-USBC_CLEARANCE = 50.0  # USB-C edge of the board to the back wall: plug + bend (measured)
-USB_A_CLEARANCE = 60.0  # USB-A port face to the -X wall: adapter + bend (measured)
-USBC_PLUG = (11.5, 30.0, 7.0)  # PSU plug overmould w, l, h — w/h measured, l preview only
-USB_A_ADAPTER = (16.0, 45.0, 8.0)  # Jabra adapter w, l, h — preview only
+# --- Plugs on right-angle adapters (mm) ---
+L_ADAPTER_DEPTH = 12.0  # right-angle adapter beyond the port face (~10 measured) + room
+USB_A_ADAPTER = (8.0, 45.0, 16.0)  # Jabra adapter x, y, z when lying along the board end
+USBC_PLUG = (30.0, 11.5, 7.0)  # PSU plug body x, y, z when lying along the board edge
 POWER_HOLE_W = 13.5  # power cable hole: the 11.5 x 7 plug overmould must pass (1 mm per side)
 POWER_HOLE_H = 9.0
 
 # --- Box (mm) ---
-OUTER_X = 160.0  # outer footprint, left-right: USB-A room + Pi + microSD (150 measured) + walls
-OUTER_Y = 134.0  # outer footprint, front-back: set by the puck pocket plus the lid rim
-WALL = 3.6  # side walls — carries the rabbet
+OUTER_DIA = 142.0  # outer diameter — Pi + both right-angle arms need Ø127 inside
+WALL = 3.6  # side wall — carries the ledge and lip
 FLOOR = 3.0  # floor thickness
-CORNER_R = 8.0  # vertical corner radius, outside
 LIP_HEIGHT = 4.0  # how far the inner lip stands above the ledge
 LEDGE_W = 2.0  # outer part of the wall cut away at the top; the lid's rim sits here
-JOINT_CLEARANCE = 0.25  # per side, lip to groove
+JOINT_CLEARANCE = 0.25  # per side, lip to groove (fit confirmed)
 GROOVE_EXTRA = 0.3  # groove deeper than the lip so the rim, not the lip, carries the lid
-EDGE_CHAMFER = 0.8  # bed-side edges, hides elephant foot
+EDGE_CHAMFER = 0.8  # bed-side edge of the box, hides elephant foot
 
 FAN_FLOOR_GAP = 10.0  # intake clearance between the fan face and the floor
-BOARD_TOP_CLEARANCE = 4.0  # solder-side pins to the lid underside
+BOARD_TOP_CLEARANCE = 4.0  # solder-side screw heads to the lid underside
 STANDOFF_DIA = 8.0  # pillar diameter: covers the nut, passes under the GPIO header
 STUB_HOLE_DIA = 3.2  # hole in the pillar top for the M2.5 thread stub
 STUB_HOLE_EXTRA = 1.0  # hole deeper than the stub so the nut, not the stub, lands
-CENTRE_CLEAR_Y = 3.0  # Pi's USB-C edge sits this far +Y of centre; the puck cable lands behind it
-POWER_HOLE_Z = 8.5  # power cable hole centre above the box underside
+PI_CENTRE = (6.5, 8.5)  # board centre in the box; balances the four protruding corners
+KEEPOUT_MARGIN = 2.0  # any protruding part to the inner wall
 
-INTAKE_W = 3.0  # intake slot width (Y), +X wall at floor level
-INTAKE_H = 16.0
-INTAKE_PITCH = 7.0
+INTAKE_ANGLE = 0.0  # degrees; row centred on +X, the microSD end
 INTAKE_COUNT = 11
+INTAKE_PITCH_DEG = 6.5
+INTAKE_W = 3.0  # slot width along the wall
+INTAKE_H = 16.0
 INTAKE_Z0 = 5.0  # slot bottom above the box underside
-INTAKE_Y_START = -20.0  # first slot centre; the row is centred on the fan
 
-VENT_W = 3.0  # exhaust slot width (Y), -X wall near the top
-VENT_H = 24.0
-VENT_PITCH = 7.0
+VENT_ANGLE = 180.0  # degrees; exhaust row centred on -X, the USB-A end
 VENT_COUNT = 12
-VENT_LID_GAP = 4.0  # wall left between the slot top and the rabbet ledge
-VENT_Y_START = -38.5  # first slot centre; the row is centred on the wall
+VENT_PITCH_DEG = 6.5
+VENT_W = 3.0
+VENT_H = 24.0
+VENT_LID_GAP = 4.0  # wall left between the slot top and the ledge
+
+POWER_ANGLE = -90.0  # degrees; the back
+POWER_HOLE_Z = 8.5  # power cable hole centre above the box underside
 
 # --- Lid (mm) ---
 LID_FLOOR = 2.4  # pocket floor ring thickness
@@ -309,10 +268,8 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 
 
 # --- Derived ---
-INNER_X = OUTER_X - 2 * WALL
-INNER_Y = OUTER_Y - 2 * WALL
-HALF_IN_X = INNER_X / 2
-HALF_IN_Y = INNER_Y / 2
+R_OUT = OUTER_DIA / 2
+R_IN = R_OUT - WALL
 COOLER_DROP = PI_ASSEMBLY_H - PI_BOARD_T  # component face down to the fan face
 PI_FOOT_H = PI_STANDOFF_H + BRACKET_T + NUT_H  # component face down to the nut face
 STUB_HOLE_DEPTH = THREAD_STUB + STUB_HOLE_EXTRA
@@ -321,12 +278,9 @@ PI_FACE_Z = FLOOR + STANDOFF_H + PI_FOOT_H  # component side of the board (facin
 INNER_HEIGHT = PI_FACE_Z - FLOOR + PI_BOARD_T + BOARD_TOP_CLEARANCE  # floor top to lid underside
 LID_BOTTOM_Z = FLOOR + INNER_HEIGHT
 BOX_HEIGHT = LID_BOTTOM_Z + LIP_HEIGHT
-LIP_THICK = WALL - LEDGE_W  # what is left of the wall beside the groove
-LID_CORNER_R = CORNER_R
-GROOVE_OUT_X = OUTER_X - 2 * LEDGE_W + 2 * JOINT_CLEARANCE  # groove outer boundary
-GROOVE_OUT_Y = OUTER_Y - 2 * LEDGE_W + 2 * JOINT_CLEARANCE
-GROOVE_IN_X = INNER_X - 2 * JOINT_CLEARANCE  # groove inner boundary
-GROOVE_IN_Y = INNER_Y - 2 * JOINT_CLEARANCE
+LIP_THICK = WALL - LEDGE_W
+GROOVE_R_OUT = R_OUT - LEDGE_W + JOINT_CLEARANCE
+GROOVE_R_IN = R_IN - JOINT_CLEARANCE
 GROOVE_DEPTH = LIP_HEIGHT + GROOVE_EXTRA
 RECESS_DEPTH = PUCK_HEIGHT - PUCK_PROUD
 RECESS_DIA = PUCK_DIA + 2 * PUCK_CLEARANCE
@@ -335,9 +289,9 @@ LID_THICK = LID_FLOOR + RECESS_DEPTH
 PUCK_TAPER_H = PUCK_HEIGHT - PUCK_STRAIGHT_H
 
 # Board placement. Flipped about Y, so board-local x runs toward -X.
-PI_X_USB = -HALF_IN_X + USB_A_CLEARANCE + PI_PORT_OVERHANG  # box X of the USB-A end
-PI_X_END = PI_X_USB + PI_LENGTH  # box X of the microSD end
-PI_Y0 = CENTRE_CLEAR_Y  # box Y of the USB-C edge
+PI_X_USB = PI_CENTRE[0] - PI_LENGTH / 2  # box X of the USB-A end
+PI_X_END = PI_CENTRE[0] + PI_LENGTH / 2  # box X of the microSD end
+PI_Y0 = PI_CENTRE[1] - PI_WIDTH / 2  # box Y of the USB-C edge
 PI_HOLES = [
     (PI_X_END - PI_HOLE_INSET - dx, PI_Y0 + PI_HOLE_INSET + dy)
     for dx in (0.0, PI_HOLE_PITCH_X)
@@ -349,60 +303,83 @@ COOLER_X = PI_X_END - PI_SOC_X
 COOLER_Y = PI_Y0 + PI_SOC_Y
 FAN_FACE_Z = PI_FACE_Z - (PI_ASSEMBLY_H - PI_BOARD_T)
 
-INTAKE_YS = [INTAKE_Y_START + i * INTAKE_PITCH for i in range(INTAKE_COUNT)]
-VENT_Z0 = LID_BOTTOM_Z - VENT_LID_GAP - VENT_H
-VENT_YS = [VENT_Y_START + i * VENT_PITCH for i in range(VENT_COUNT)]
+# Arms on the right-angle adapters (box coordinates)
+USB_A_FACE = PI_X_USB - PI_PORT_OVERHANG  # USB-A port face
+USB_A_Y = PI_Y0 + PI_USB_YS[1]  # USB 3.0 stack, the one the adapter goes on
+USB_A_Z = PI_FACE_Z - 4.5  # upper port of the stack
+USB_A_ARM_X = (USB_A_FACE - L_ADAPTER_DEPTH, USB_A_FACE)  # adapter + Jabra plug live here
+USB_A_ARM_Y = (USB_A_Y + 8.0 - USB_A_ADAPTER[1], USB_A_Y + 8.0)  # runs toward the back
+USBC_EDGE = PI_Y0 - PI_USBC_OVERHANG
+USBC_ARM_Y = (USBC_EDGE - L_ADAPTER_DEPTH, USBC_EDGE)
+USBC_ARM_X = (USBC_X - 6.0 - USBC_PLUG[0], USBC_X + 6.0)  # plug body runs toward -X
+USBC_CABLE_Y = USBC_EDGE - L_ADAPTER_DEPTH / 2
 
-WALL_FLAT_HALF_X = OUTER_X / 2 - CORNER_R  # flat run of the ±Y walls, outside the corner radii
-WALL_FLAT_HALF_Y = OUTER_Y / 2 - CORNER_R  # flat run of the ±X walls
+INTAKE_ANGLES = [
+    INTAKE_ANGLE + (i - (INTAKE_COUNT - 1) / 2) * INTAKE_PITCH_DEG for i in range(INTAKE_COUNT)
+]
+VENT_ANGLES = [VENT_ANGLE + (i - (VENT_COUNT - 1) / 2) * VENT_PITCH_DEG for i in range(VENT_COUNT)]
+VENT_Z0 = LID_BOTTOM_Z - VENT_LID_GAP - VENT_H
+
 SLOT_Y_IN = -(OPENING_DIA / 2 - 1.0)  # cable slot runs from the opening ...
 SLOT_Y_OUT = -(RECESS_DIA / 2 + 1.0)  # ... out past the pocket wall
 
-assert max(OUTER_X, OUTER_Y) <= 180.0 and BOX_HEIGHT <= 180.0, "does not fit the A1 Mini bed"
-assert OUTER_Y >= RECESS_DIA + 2 * (WALL + 2.0), "lid rim beside the pocket too thin"
+# Everything that sticks out, checked against the inner wall
+KEEPOUT_POINTS = [
+    (PI_X_END + PI_SD_OVERHANG, PI_Y0),
+    (PI_X_END + PI_SD_OVERHANG, PI_Y0 + PI_WIDTH),
+    (PI_X_USB, PI_Y0 + PI_WIDTH),
+    (USB_A_ARM_X[0], USB_A_ARM_Y[0]),
+    (USB_A_ARM_X[0], USB_A_ARM_Y[1]),
+    (USBC_ARM_X[0], USBC_ARM_Y[0]),
+    (USBC_ARM_X[1], USBC_ARM_Y[0]),
+]
+KEEPOUT_R = max(hypot(x, y) for x, y in KEEPOUT_POINTS)
+
+assert OUTER_DIA <= 180.0 and BOX_HEIGHT <= 180.0, "does not fit the A1 Mini bed"
+assert KEEPOUT_R < R_IN - KEEPOUT_MARGIN, f"Pi or a plug reaches the wall ({KEEPOUT_R:.1f} mm)"
+assert all(hypot(x, y) + STANDOFF_DIA / 2 < R_IN for x, y in PI_HOLES), "pillar in the wall"
 assert FAN_FACE_Z - FLOOR >= 8.0, "fan too close to the floor to breathe"
-assert PI_X_END + PI_SD_OVERHANG < HALF_IN_X - 2.0, "microSD card hits the +X wall"
-assert PI_Y0 + HALF_IN_Y >= USBC_CLEARANCE, "no room for the USB-C plug"
-assert PI_Y0 + PI_WIDTH <= HALF_IN_Y - 4.0, "GPIO edge too close to the front wall"
-assert PI_Y0 > SLOT_Y_IN + 6.0, "puck cable would drop onto the Pi, not behind it"
+assert USBC_CABLE_Y - USBC_PLUG[1] / 2 > SLOT_Y_IN + 2.0, "PSU plug body reaches the cable drop"
 assert OPENING_DIA >= 60.0, "opening too small to push the puck out"
 assert PUCK_BASE_DIA < RECESS_DIA - 2 * 4.0, "base too close to the pocket wall for the cable"
 assert PUCK_STRAIGHT_H < RECESS_DEPTH, "straight band must be inside the pocket"
-assert min(INTAKE_YS) - INTAKE_W / 2 > -WALL_FLAT_HALF_Y, "intake runs into the corner radius"
-assert max(INTAKE_YS) + INTAKE_W / 2 < WALL_FLAT_HALF_Y, "intake runs into the corner radius"
-assert min(VENT_YS) - VENT_W / 2 > -WALL_FLAT_HALF_Y, "vents run into the corner radius"
-assert max(VENT_YS) + VENT_W / 2 < WALL_FLAT_HALF_Y, "vents run into the corner radius"
+assert SLOT_Y_OUT > -GROOVE_R_IN + 1.0, "cable slot reaches the lid groove"
+assert R_OUT - GROOVE_R_OUT >= 1.5, "lid rim outside the groove too thin"
+assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
 assert VENT_Z0 > FAN_FACE_Z, "exhaust slots should sit above the fan, not beside it"
 assert POWER_HOLE_Z - POWER_HOLE_H / 2 > FLOOR, "power cable hole breaks into the floor"
-assert abs(USBC_X) + POWER_HOLE_W / 2 < WALL_FLAT_HALF_X, "power hole runs into the corner radius"
-assert SLOT_Y_OUT > -GROOVE_IN_Y / 2 + 1.0, "cable slot reaches the lid groove"
-assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
-assert GROOVE_OUT_X < OUTER_X - 2.0, "lid rim outside the groove too thin"
 assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
 assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
 assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
+
+
+def _wall_cut(angle_deg: float, z: float, width: float, height: float) -> Location:
+    """Location of a radial cutter through the wall at this angle and height."""
+    r = R_OUT - WALL / 2
+    a = radians(angle_deg)
+    return Location((r * cos(a), r * sin(a), z), (0, 0, angle_deg))
 
 
 # ---------------------------------------------------------------------------
 # Box
 # ---------------------------------------------------------------------------
 with BuildPart() as box_builder:
-    with BuildSketch():
-        RectangleRounded(OUTER_X, OUTER_Y, CORNER_R)
-    extrude(amount=BOX_HEIGHT)
+    Cylinder(radius=R_OUT, height=BOX_HEIGHT, align=(Align.CENTER, Align.CENTER, Align.MIN))
     chamfer(box_builder.faces().sort_by(Axis.Z)[0].edges(), length=EDGE_CHAMFER)
 
     # Cavity, up to the wall top
-    with BuildSketch(Plane.XY.offset(FLOOR)):
-        RectangleRounded(INNER_X, INNER_Y, CORNER_R - WALL)
-    extrude(amount=BOX_HEIGHT - FLOOR, mode=Mode.SUBTRACT)
+    with Locations(Pos(0, 0, FLOOR)):
+        Cylinder(
+            radius=R_IN,
+            height=BOX_HEIGHT,
+            align=(Align.CENTER, Align.CENTER, Align.MIN),
+            mode=Mode.SUBTRACT,
+        )
 
     # Ledge: cut the outer part of the wall away at the top, leaving the inner lip
     with BuildSketch(Plane.XY.offset(LID_BOTTOM_Z)):
-        RectangleRounded(OUTER_X + 2, OUTER_Y + 2, CORNER_R + 1)
-        RectangleRounded(
-            OUTER_X - 2 * LEDGE_W, OUTER_Y - 2 * LEDGE_W, CORNER_R - LEDGE_W, mode=Mode.SUBTRACT
-        )
+        Circle(radius=R_OUT + 1)
+        Circle(radius=R_OUT - LEDGE_W, mode=Mode.SUBTRACT)
     extrude(amount=LIP_HEIGHT + 1, mode=Mode.SUBTRACT)
 
     # Pi pillars: the cooler's corner nuts land on the flat tops, the thread
@@ -416,19 +393,15 @@ with BuildPart() as box_builder:
             Circle(radius=STUB_HOLE_DIA / 2)
     extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
 
-    # Intake slots in the +X wall, at floor level near the fan
-    for iy in INTAKE_YS:
-        with Locations(Pos(OUTER_X / 2 - WALL / 2, iy, INTAKE_Z0 + INTAKE_H / 2)):
+    # Intake slots at floor level, exhaust slots up near the lid, power hole
+    for ang in INTAKE_ANGLES:
+        with Locations(_wall_cut(ang, INTAKE_Z0 + INTAKE_H / 2, INTAKE_W, INTAKE_H)):
             Box(WALL + 2, INTAKE_W, INTAKE_H, mode=Mode.SUBTRACT)
-
-    # Exhaust slots in the -X wall, up near the lid
-    for vy in VENT_YS:
-        with Locations(Pos(-OUTER_X / 2 + WALL / 2, vy, VENT_Z0 + VENT_H / 2)):
+    for ang in VENT_ANGLES:
+        with Locations(_wall_cut(ang, VENT_Z0 + VENT_H / 2, VENT_W, VENT_H)):
             Box(WALL + 2, VENT_W, VENT_H, mode=Mode.SUBTRACT)
-
-    # Power cable hole in the -Y wall, at floor level below the receptacle
-    with Locations(Pos(USBC_X, -OUTER_Y / 2 + WALL / 2, POWER_HOLE_Z)):
-        Box(POWER_HOLE_W, WALL + 2, POWER_HOLE_H, mode=Mode.SUBTRACT)
+    with Locations(_wall_cut(POWER_ANGLE, POWER_HOLE_Z, POWER_HOLE_W, POWER_HOLE_H)):
+        Box(WALL + 2, POWER_HOLE_W, POWER_HOLE_H, mode=Mode.SUBTRACT)
 
 box_part = box_builder.part
 
@@ -436,18 +409,24 @@ box_part = box_builder.part
 # ---------------------------------------------------------------------------
 # Lid
 # ---------------------------------------------------------------------------
-with BuildPart() as lid_builder:
-    with BuildSketch():
-        RectangleRounded(OUTER_X, OUTER_Y, LID_CORNER_R)
-    extrude(amount=LID_THICK)
-    fillet(lid_builder.faces().sort_by(Axis.Z)[-1].edges(), radius=LID_TOP_FILLET)
+def _rim_edge(builder: BuildPart, radius: float):
+    """Topmost circular edge of this radius."""
+    return (
+        builder.edges()
+        .filter_by(GeomType.CIRCLE)
+        .filter_by(lambda e: abs(e.radius - radius) < 0.01)
+        .sort_by(Axis.Z)[-1]
+    )
 
-    # Groove in the underside for the box's lip
+
+with BuildPart() as lid_builder:
+    Cylinder(radius=R_OUT, height=LID_THICK, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    fillet(_rim_edge(lid_builder, R_OUT), radius=LID_TOP_FILLET)
+
+    # Annular groove in the underside for the box's lip
     with BuildSketch(Plane.XY.offset(-1)):
-        RectangleRounded(GROOVE_OUT_X, GROOVE_OUT_Y, CORNER_R - LEDGE_W + JOINT_CLEARANCE)
-        RectangleRounded(
-            GROOVE_IN_X, GROOVE_IN_Y, CORNER_R - WALL - JOINT_CLEARANCE, mode=Mode.SUBTRACT
-        )
+        Circle(radius=GROOVE_R_OUT)
+        Circle(radius=GROOVE_R_IN, mode=Mode.SUBTRACT)
     extrude(amount=1 + GROOVE_DEPTH, mode=Mode.SUBTRACT)
 
     # Puck pocket, full puck height less what stands proud
@@ -458,13 +437,7 @@ with BuildPart() as lid_builder:
             align=(Align.CENTER, Align.CENTER, Align.MAX),
             mode=Mode.SUBTRACT,
         )
-    pocket_rim = (
-        lid_builder.edges()
-        .filter_by(GeomType.CIRCLE)
-        .filter_by(lambda e: abs(e.radius - RECESS_DIA / 2) < 0.01)
-        .sort_by(Axis.Z)[-1]
-    )
-    chamfer(pocket_rim, length=POCKET_EDGE_CHAMFER)
+    chamfer(_rim_edge(lid_builder, RECESS_DIA / 2), length=POCKET_EDGE_CHAMFER)
 
     # Opening inside the floor ring: push-out access
     Cylinder(
@@ -500,6 +473,13 @@ def _board_box(x0: float, x1: float, y0: float, y1: float, z0: float, z1: float)
     bx0, bx1 = PI_X_END - x1, PI_X_END - x0
     return Pos(bx0, PI_Y0 + y0, z0) * Box(
         bx1 - bx0, y1 - y0, z1 - z0, align=(Align.MIN, Align.MIN, Align.MIN)
+    )
+
+
+def _span_box(xs: tuple, ys: tuple, zs: tuple) -> Box:
+    """Axis-aligned box from (min, max) ranges in the box frame."""
+    return Pos(xs[0], ys[0], zs[0]) * Box(
+        xs[1] - xs[0], ys[1] - ys[0], zs[1] - zs[0], align=(Align.MIN, Align.MIN, Align.MIN)
     )
 
 
@@ -543,7 +523,12 @@ pi_ports = Compound(
         ),
         # USB-C power receptacle, 9 wide, past the edge by 1.3
         _board_box(
-            PI_USBC_X - 4.5, PI_USBC_X + 4.5, -1.3, 7.5, PI_FACE_Z - PI_USBC_HEIGHT, PI_FACE_Z
+            PI_USBC_X - 4.5,
+            PI_USBC_X + 4.5,
+            -PI_USBC_OVERHANG,
+            7.5,
+            PI_FACE_Z - PI_USBC_HEIGHT,
+            PI_FACE_Z,
         ),
         # micro HDMI x2
         *[_board_box(x - 3.5, x + 3.5, -1.0, 6.5, PI_FACE_Z - 3.0, PI_FACE_Z) for x in PI_HDMI_XS],
@@ -558,7 +543,12 @@ pi_ports = Compound(
         ),
         # microSD card on the solder side (now on top), past the end by 2.5
         _board_box(
-            -PI_SD_OVERHANG, 12.5, 20.5, 31.5, PI_FACE_Z + PI_BOARD_T, PI_FACE_Z + PI_BOARD_T + 1.0
+            -PI_SD_OVERHANG,
+            12.5,
+            20.5,
+            31.5,
+            PI_FACE_Z + PI_BOARD_T,
+            PI_FACE_Z + PI_BOARD_T + 1.0,
         ),
     ]
 )
@@ -597,41 +587,41 @@ cooler_fan = Pos(COOLER_X, COOLER_Y, FAN_FACE_Z) * Box(
     align=(Align.CENTER, Align.CENTER, Align.MIN),
 )
 
-# PSU plug in the receptacle, cable down and out through the back wall
-usbc_plug = Pos(USBC_X, PI_Y0 - 1.3, USBC_Z) * Box(
-    USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2], align=(Align.CENTER, Align.MAX, Align.CENTER)
+# Right-angle USB-C adapter on the receptacle, PSU plug lying along the back edge,
+# cable down and out through the back wall
+usbc_adapter = _span_box((USBC_X - 6.0, USBC_X + 6.0), USBC_ARM_Y, (USBC_Z - 4.0, USBC_Z + 4.0))
+usbc_plug = _span_box(
+    (USBC_ARM_X[0], USBC_X - 6.0),
+    (USBC_CABLE_Y - USBC_PLUG[1] / 2, USBC_CABLE_Y + USBC_PLUG[1] / 2),
+    (USBC_Z - USBC_PLUG[2] / 2, USBC_Z + USBC_PLUG[2] / 2),
 )
-usbc_tail = PI_Y0 - 1.3 - USBC_PLUG[1]
-power_cable = _cable(
-    [
-        (USBC_X, usbc_tail, USBC_Z),
-        (USBC_X, usbc_tail - 14.0, USBC_Z - 6.0),
-        (USBC_X, -HALF_IN_Y + 8.0, POWER_HOLE_Z),
-        (USBC_X, -OUTER_Y / 2 - 20.0, POWER_HOLE_Z),
-    ],
-    CABLE_DIA / 2,
-)
+POWER_CABLE_PATH = [
+    (USBC_ARM_X[0], USBC_CABLE_Y, USBC_Z),
+    (USBC_ARM_X[0] - 8.0, USBC_CABLE_Y - 8.0, USBC_Z - 8.0),
+    (0.0, -R_IN + 6.0, POWER_HOLE_Z),
+    (0.0, -R_OUT - 20.0, POWER_HOLE_Z),
+]
+power_cable = _cable(POWER_CABLE_PATH, CABLE_DIA / 2)
 
-# Jabra adapter in the upper port of the USB 3.0 stack, cable looping through
-# the back half of the floor and up through the lid slot into the puck's cone
-usb_a_y = PI_Y0 + PI_USB_YS[1]
-usb_a_z = PI_FACE_Z - 4.5
-usb_a_face = PI_X_USB - PI_PORT_OVERHANG
-usb_a_adapter = Pos(usb_a_face, usb_a_y, usb_a_z) * Box(
-    USB_A_ADAPTER[1],
-    USB_A_ADAPTER[0],
-    USB_A_ADAPTER[2],
-    align=(Align.MAX, Align.CENTER, Align.CENTER),
+# Right-angle USB-A adapter on the USB 3.0 stack, Jabra adapter lying along the
+# board end toward the back, cable looping over the floor and up into the puck
+usb_a_l_adapter = _span_box(
+    USB_A_ARM_X, (USB_A_Y - 8.0, USB_A_Y + 8.0), (USB_A_Z - 8.0, USB_A_Z + 8.0)
+)
+usb_a_adapter = _span_box(
+    (USB_A_ARM_X[0] + 2.0, USB_A_ARM_X[0] + 2.0 + USB_A_ADAPTER[0]),
+    (USB_A_ARM_Y[0], USB_A_Y - 8.0),
+    (USB_A_Z - USB_A_ADAPTER[2] / 2, USB_A_Z + USB_A_ADAPTER[2] / 2),
 )
 cable_exit = (0.0, -(PUCK_BASE_DIA / 2 + 1.0), puck_z + PUCK_CABLE_EXIT_Z)
+_arm_x = USB_A_ARM_X[0] + 2.0 + USB_A_ADAPTER[0] / 2
 JABRA_CABLE_PATH = [
-    (usb_a_face - USB_A_ADAPTER[1], usb_a_y, usb_a_z),
-    (usb_a_face - USB_A_ADAPTER[1] - 8.0, usb_a_y, usb_a_z - 8.0),
-    (-HALF_IN_X + 6.0, usb_a_y - 10.0, FLOOR + 12.0),
-    (-HALF_IN_X + 6.0, -HALF_IN_Y + 20.0, FLOOR + 6.0),
-    (-30.0, -HALF_IN_Y + 6.0, FLOOR + 6.0),
-    (30.0, -HALF_IN_Y + 6.0, FLOOR + 6.0),
-    (40.0, -40.0, FLOOR + 8.0),
+    (_arm_x, USB_A_ARM_Y[0], USB_A_Z),
+    (_arm_x, USB_A_ARM_Y[0] - 8.0, USB_A_Z - 10.0),
+    (_arm_x + 10.0, -R_IN + 12.0, FLOOR + 8.0),
+    (-12.0, -R_IN + 7.0, FLOOR + 6.0),
+    (14.0, -R_IN + 7.0, FLOOR + 6.0),
+    (24.0, -40.0, FLOOR + 8.0),
     (0.0, -(RECESS_DIA / 2 - 5.0), FLOOR + 14.0),
     (0.0, -(RECESS_DIA / 2 - 5.0), puck_z - 2.0),
     cable_exit,
@@ -649,9 +639,9 @@ PREVIEW_PARTS: list[tuple[str, object]] = [
     ("cooler_feet", cooler_feet),
     ("cooler_fins", cooler_fins),
     ("cooler_fan", cooler_fan),
-    ("usbc_plug", usbc_plug),
+    ("usbc_plug", usbc_adapter + usbc_plug),
     ("power_cable", power_cable),
-    ("usb_a_adapter", usb_a_adapter),
+    ("usb_a_adapter", usb_a_l_adapter + usb_a_adapter),
     ("jabra_cable", jabra_cable),
 ]
 assembly = Compound(label="smart-speaker-case", children=[shape for _, shape in PREVIEW_PARTS])
@@ -663,10 +653,9 @@ assembly = Compound(label="smart-speaker-case", children=[shape for _, shape in 
 TEST_WALL = 3.0  # wall of the two puck test pieces
 TEST_COLLAR_H = 8.0  # collar: the pocket mouth, slips over the straight band
 TEST_CUP_WALL_H = 8.0  # cup: short wall above the floor ring
-TEST_RABBET_OUTER = 50.0  # mini box / lid pair, real wall, lip and corner radius
-TEST_RABBET_H = 20.0  # mini box wall height including the lip
-TEST_RABBET_FLOOR = 2.0
-TEST_PILLAR_H = 8.0  # pillar stub in the mini box
+TEST_JOINT_DIA = 60.0  # mini round box / lid pair, real wall, ledge, lip and groove
+TEST_JOINT_H = 20.0  # mini box wall height including the lip
+TEST_JOINT_FLOOR = 2.0
 TEST_LID_THICK = 8.0
 
 with BuildPart() as collar_builder:
@@ -682,13 +671,7 @@ with BuildPart() as collar_builder:
             align=(Align.CENTER, Align.CENTER, Align.MIN),
             mode=Mode.SUBTRACT,
         )
-    collar_rim = (
-        collar_builder.edges()
-        .filter_by(GeomType.CIRCLE)
-        .filter_by(lambda e: abs(e.radius - RECESS_DIA / 2) < 0.01)
-        .sort_by(Axis.Z)[-1]
-    )
-    chamfer(collar_rim, length=POCKET_EDGE_CHAMFER)
+    chamfer(_rim_edge(collar_builder, RECESS_DIA / 2), length=POCKET_EDGE_CHAMFER)
 test_collar = collar_builder.part
 
 with BuildPart() as cup_builder:
@@ -716,55 +699,29 @@ with BuildPart() as cup_builder:
 test_cup = cup_builder.part
 
 with BuildPart() as test_box_builder:
-    with BuildSketch():
-        RectangleRounded(TEST_RABBET_OUTER, TEST_RABBET_OUTER, CORNER_R)
-    extrude(amount=TEST_RABBET_H)
+    r = TEST_JOINT_DIA / 2
+    Cylinder(radius=r, height=TEST_JOINT_H, align=(Align.CENTER, Align.CENTER, Align.MIN))
     chamfer(test_box_builder.faces().sort_by(Axis.Z)[0].edges(), length=EDGE_CHAMFER)
-    with BuildSketch(Plane.XY.offset(TEST_RABBET_FLOOR)):
-        RectangleRounded(
-            TEST_RABBET_OUTER - 2 * WALL, TEST_RABBET_OUTER - 2 * WALL, CORNER_R - WALL
-        )
-    extrude(amount=TEST_RABBET_H - TEST_RABBET_FLOOR, mode=Mode.SUBTRACT)
-    with BuildSketch(Plane.XY.offset(TEST_RABBET_H - LIP_HEIGHT)):
-        RectangleRounded(TEST_RABBET_OUTER + 2, TEST_RABBET_OUTER + 2, CORNER_R + 1)
-        RectangleRounded(
-            TEST_RABBET_OUTER - 2 * LEDGE_W,
-            TEST_RABBET_OUTER - 2 * LEDGE_W,
-            CORNER_R - LEDGE_W,
+    with Locations(Pos(0, 0, TEST_JOINT_FLOOR)):
+        Cylinder(
+            radius=r - WALL,
+            height=TEST_JOINT_H,
+            align=(Align.CENTER, Align.CENTER, Align.MIN),
             mode=Mode.SUBTRACT,
         )
+    with BuildSketch(Plane.XY.offset(TEST_JOINT_H - LIP_HEIGHT)):
+        Circle(radius=r + 1)
+        Circle(radius=r - LEDGE_W, mode=Mode.SUBTRACT)
     extrude(amount=LIP_HEIGHT + 1, mode=Mode.SUBTRACT)
-    # the real power-cable hole, in the -Y wall
-    with Locations(Pos(0, -TEST_RABBET_OUTER / 2 + WALL / 2, POWER_HOLE_Z)):
-        Box(POWER_HOLE_W, WALL + 2, POWER_HOLE_H, mode=Mode.SUBTRACT)
-    # one pillar top with the thread-stub hole
-    with Locations(Pos(0, 0, TEST_RABBET_FLOOR)):
-        Cylinder(
-            radius=STANDOFF_DIA / 2,
-            height=TEST_PILLAR_H,
-            align=(Align.CENTER, Align.CENTER, Align.MIN),
-        )
-    with Locations(Pos(0, 0, TEST_RABBET_FLOOR + TEST_PILLAR_H - STUB_HOLE_DEPTH)):
-        Cylinder(
-            radius=STUB_HOLE_DIA / 2,
-            height=STUB_HOLE_DEPTH + 1,
-            align=(Align.CENTER, Align.CENTER, Align.MIN),
-            mode=Mode.SUBTRACT,
-        )
 test_box = test_box_builder.part
 
 with BuildPart() as test_lid_builder:
-    with BuildSketch():
-        RectangleRounded(TEST_RABBET_OUTER, TEST_RABBET_OUTER, CORNER_R)
-    extrude(amount=TEST_LID_THICK)
-    fillet(test_lid_builder.faces().sort_by(Axis.Z)[-1].edges(), radius=LID_TOP_FILLET)
-    test_groove_out = TEST_RABBET_OUTER - 2 * LEDGE_W + 2 * JOINT_CLEARANCE
-    test_groove_in = TEST_RABBET_OUTER - 2 * WALL - 2 * JOINT_CLEARANCE
+    r = TEST_JOINT_DIA / 2
+    Cylinder(radius=r, height=TEST_LID_THICK, align=(Align.CENTER, Align.CENTER, Align.MIN))
+    fillet(_rim_edge(test_lid_builder, r), radius=LID_TOP_FILLET)
     with BuildSketch(Plane.XY.offset(-1)):
-        RectangleRounded(test_groove_out, test_groove_out, CORNER_R - LEDGE_W + JOINT_CLEARANCE)
-        RectangleRounded(
-            test_groove_in, test_groove_in, CORNER_R - WALL - JOINT_CLEARANCE, mode=Mode.SUBTRACT
-        )
+        Circle(radius=r - LEDGE_W + JOINT_CLEARANCE)
+        Circle(radius=r - WALL - JOINT_CLEARANCE, mode=Mode.SUBTRACT)
     extrude(amount=1 + GROOVE_DEPTH, mode=Mode.SUBTRACT)
 test_lid = test_lid_builder.part
 
@@ -791,9 +748,6 @@ with BuildPart() as jig_builder:
     extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
 test_jig = jig_builder.part
 
-assert POWER_HOLE_Z + POWER_HOLE_H / 2 < TEST_RABBET_H - LIP_HEIGHT - 2.0, "test hole hits the lip"
-assert TEST_RABBET_FLOOR + TEST_PILLAR_H < TEST_RABBET_H - LIP_HEIGHT, "test pillar hits the lid"
-
 
 # ---------------------------------------------------------------------------
 # Export
@@ -815,24 +769,21 @@ if __name__ == "__main__":
     box_cm3 = box_part.volume / 1000
     lid_cm3 = lid_part.volume / 1000
     total_h = max(puck_z + PUCK_HEIGHT, LID_BOTTOM_Z + LID_THICK)
-    usbc_room = PI_Y0 + HALF_IN_Y
-    usb_a_room = usb_a_face + HALF_IN_X
-    print(f"  box:        {OUTER_X:.0f} x {OUTER_Y:.0f} x {BOX_HEIGHT:.0f} mm, {box_cm3:.0f} cm3")
-    print(f"  lid:        {OUTER_X:.0f} x {OUTER_Y:.0f} x {LID_THICK:.1f} mm, {lid_cm3:.0f} cm3")
-    size = f"{OUTER_X:.0f} x {OUTER_Y:.0f} x {total_h:.1f} mm"
-    print(f"  assembled:  {size}, puck {PUCK_PROUD:.1f} proud")
+    print(f"  box:        Ø{OUTER_DIA:.0f} x {BOX_HEIGHT:.0f} mm, {box_cm3:.0f} cm3")
+    print(f"  lid:        Ø{OUTER_DIA:.0f} x {LID_THICK:.1f} mm, {lid_cm3:.0f} cm3")
+    print(f"  assembled:  Ø{OUTER_DIA:.0f} x {total_h:.1f} mm, puck {PUCK_PROUD:.1f} proud")
     print(f"  puck nest:  Ø{RECESS_DIA:.1f} x {RECESS_DEPTH:.1f} deep, ring to Ø{OPENING_DIA:.0f}")
     print(
         f"  Pi:         x {PI_X_USB:.1f} .. {PI_X_END:.1f}, y {PI_Y0:.1f} .. {PI_Y0 + PI_WIDTH:.1f}"
     )
+    print(f"  keep-out:   farthest corner at r={KEEPOUT_R:.1f}, wall at r={R_IN:.1f}")
     print(f"  pillars:    {STANDOFF_H:.1f} mm tall, fan face at z={FAN_FACE_Z:.1f}")
     print(f"  Pi rests:   on its 4 nuts, {PI_FOOT_H:.1f} mm below the board face")
     print("  Pi screws:  4 x M2.5 x 6 from the solder side (replace the long brass standoffs)")
     tests = [test_collar, test_cup, test_box, test_lid, test_jig]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
-    print(f"  plug room:  USB-C {usbc_room:.1f} mm, USB-A {usb_a_room:.1f} mm")
     hole = f"{POWER_HOLE_W:.1f} x {POWER_HOLE_H:.1f} mm"
-    print(f"  power hole: x={USBC_X:.1f}, z={POWER_HOLE_Z:.1f}, {hole}")
+    print(f"  power hole: at {POWER_ANGLE:.0f} deg, z={POWER_HOLE_Z:.1f}, {hole}")
 
     if show is not None:
         try:
