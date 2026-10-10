@@ -91,7 +91,7 @@ Lid
   buttons never sit below the rim. Set PUCK_PROUD to 0 for dead flush.
 - Flush joint: the top 4 mm of the box wall is stepped — the outer 2 mm is
   cut away to a ledge, the inner 1.6 mm stays as a lip. The lid is the full
-  164 mm square; its underside carries a 2.1 mm wide, 4.3 mm deep groove
+  160 x 134 mm footprint as the box; its underside carries a 2.1 mm wide, 4.3 mm deep groove
   that the lip enters with 0.25 mm per side, and its outer 1.7 mm rim sits
   on the ledge. Outside you see one seam line 55 mm up; the lid cannot
   slide, only lift (it is lifted by its edge, 34.9 mm tall). Being square
@@ -148,13 +148,13 @@ Fit tests (print these first, they are cheap)
 
 Print notes
 -----------
-- Box: 164 x 164 x 59 mm, open side up, no supports. The slots and the
+- Box: 160 x 134 x 59 mm, open side up, no supports. The slots and the
   cable hole are short bridges; the pillars are plain, with a small hole
   in the top.
-- Lid: 164 x 164 x 34.9 mm, pocket side up, flat on the bed, no
+- Lid: 160 x 134 x 34.9 mm, pocket side up, flat on the bed, no
   supports. The rim around the pocket is a solid block in the model and
   prints as walls plus infill; 15 % is plenty.
-- 164 mm on a 180 mm bed leaves room for a brim. 3 walls, 0.2 mm layers.
+- 160 mm on a 180 mm bed leaves room for a brim. 3 walls, 0.2 mm layers.
 
 Preview
 -------
@@ -267,7 +267,8 @@ POWER_HOLE_W = 13.5  # power cable hole: the 11.5 x 7 plug overmould must pass (
 POWER_HOLE_H = 9.0
 
 # --- Box (mm) ---
-OUTER = 164.0  # outer footprint, square
+OUTER_X = 160.0  # outer footprint, left-right: USB-A room + Pi + microSD (150 measured) + walls
+OUTER_Y = 134.0  # outer footprint, front-back: set by the puck pocket plus the lid rim
 WALL = 3.6  # side walls — carries the rabbet
 FLOOR = 3.0  # floor thickness
 CORNER_R = 8.0  # vertical corner radius, outside
@@ -282,7 +283,7 @@ BOARD_TOP_CLEARANCE = 4.0  # solder-side pins to the lid underside
 STANDOFF_DIA = 8.0  # pillar diameter: covers the nut, passes under the GPIO header
 STUB_HOLE_DIA = 3.2  # hole in the pillar top for the M2.5 thread stub
 STUB_HOLE_EXTRA = 1.0  # hole deeper than the stub so the nut, not the stub, lands
-CENTRE_CLEAR_Y = 10.0  # Pi's USB-C edge sits this far +Y of centre
+CENTRE_CLEAR_Y = 3.0  # Pi's USB-C edge sits this far +Y of centre; the puck cable lands behind it
 POWER_HOLE_Z = 8.5  # power cable hole centre above the box underside
 
 INTAKE_W = 3.0  # intake slot width (Y), +X wall at floor level
@@ -290,7 +291,7 @@ INTAKE_H = 16.0
 INTAKE_PITCH = 7.0
 INTAKE_COUNT = 11
 INTAKE_Z0 = 5.0  # slot bottom above the box underside
-INTAKE_Y_START = 0.0  # first slot centre; the row runs under the fan toward +Y
+INTAKE_Y_START = -20.0  # first slot centre; the row is centred on the fan
 
 VENT_W = 3.0  # exhaust slot width (Y), -X wall near the top
 VENT_H = 24.0
@@ -308,8 +309,10 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 
 
 # --- Derived ---
-INNER = OUTER - 2 * WALL
-HALF_IN = INNER / 2
+INNER_X = OUTER_X - 2 * WALL
+INNER_Y = OUTER_Y - 2 * WALL
+HALF_IN_X = INNER_X / 2
+HALF_IN_Y = INNER_Y / 2
 COOLER_DROP = PI_ASSEMBLY_H - PI_BOARD_T  # component face down to the fan face
 PI_FOOT_H = PI_STANDOFF_H + BRACKET_T + NUT_H  # component face down to the nut face
 STUB_HOLE_DEPTH = THREAD_STUB + STUB_HOLE_EXTRA
@@ -319,10 +322,11 @@ INNER_HEIGHT = PI_FACE_Z - FLOOR + PI_BOARD_T + BOARD_TOP_CLEARANCE  # floor top
 LID_BOTTOM_Z = FLOOR + INNER_HEIGHT
 BOX_HEIGHT = LID_BOTTOM_Z + LIP_HEIGHT
 LIP_THICK = WALL - LEDGE_W  # what is left of the wall beside the groove
-LID_SIZE = OUTER  # flush with the box
 LID_CORNER_R = CORNER_R
-GROOVE_OUT = OUTER - 2 * LEDGE_W + 2 * JOINT_CLEARANCE  # groove outer boundary
-GROOVE_IN = INNER - 2 * JOINT_CLEARANCE  # groove inner boundary
+GROOVE_OUT_X = OUTER_X - 2 * LEDGE_W + 2 * JOINT_CLEARANCE  # groove outer boundary
+GROOVE_OUT_Y = OUTER_Y - 2 * LEDGE_W + 2 * JOINT_CLEARANCE
+GROOVE_IN_X = INNER_X - 2 * JOINT_CLEARANCE  # groove inner boundary
+GROOVE_IN_Y = INNER_Y - 2 * JOINT_CLEARANCE
 GROOVE_DEPTH = LIP_HEIGHT + GROOVE_EXTRA
 RECESS_DEPTH = PUCK_HEIGHT - PUCK_PROUD
 RECESS_DIA = PUCK_DIA + 2 * PUCK_CLEARANCE
@@ -331,7 +335,7 @@ LID_THICK = LID_FLOOR + RECESS_DEPTH
 PUCK_TAPER_H = PUCK_HEIGHT - PUCK_STRAIGHT_H
 
 # Board placement. Flipped about Y, so board-local x runs toward -X.
-PI_X_USB = -HALF_IN + USB_A_CLEARANCE + PI_PORT_OVERHANG  # box X of the USB-A end
+PI_X_USB = -HALF_IN_X + USB_A_CLEARANCE + PI_PORT_OVERHANG  # box X of the USB-A end
 PI_X_END = PI_X_USB + PI_LENGTH  # box X of the microSD end
 PI_Y0 = CENTRE_CLEAR_Y  # box Y of the USB-C edge
 PI_HOLES = [
@@ -349,28 +353,31 @@ INTAKE_YS = [INTAKE_Y_START + i * INTAKE_PITCH for i in range(INTAKE_COUNT)]
 VENT_Z0 = LID_BOTTOM_Z - VENT_LID_GAP - VENT_H
 VENT_YS = [VENT_Y_START + i * VENT_PITCH for i in range(VENT_COUNT)]
 
-WALL_FLAT_HALF = OUTER / 2 - CORNER_R  # flat run of each wall, outside the corner radii
+WALL_FLAT_HALF_X = OUTER_X / 2 - CORNER_R  # flat run of the ±Y walls, outside the corner radii
+WALL_FLAT_HALF_Y = OUTER_Y / 2 - CORNER_R  # flat run of the ±X walls
 SLOT_Y_IN = -(OPENING_DIA / 2 - 1.0)  # cable slot runs from the opening ...
 SLOT_Y_OUT = -(RECESS_DIA / 2 + 1.0)  # ... out past the pocket wall
 
-assert OUTER <= 180.0 and BOX_HEIGHT <= 180.0, "box does not fit the A1 Mini bed"
+assert max(OUTER_X, OUTER_Y) <= 180.0 and BOX_HEIGHT <= 180.0, "does not fit the A1 Mini bed"
+assert OUTER_Y >= RECESS_DIA + 2 * (WALL + 2.0), "lid rim beside the pocket too thin"
 assert FAN_FACE_Z - FLOOR >= 8.0, "fan too close to the floor to breathe"
-assert PI_X_END + PI_SD_OVERHANG < HALF_IN - 2.0, "microSD card hits the +X wall"
-assert PI_Y0 + HALF_IN >= USBC_CLEARANCE, "no room for the USB-C plug"
-assert PI_Y0 + PI_WIDTH < HALF_IN - 4.0, "GPIO edge too close to the front wall"
+assert PI_X_END + PI_SD_OVERHANG < HALF_IN_X - 2.0, "microSD card hits the +X wall"
+assert PI_Y0 + HALF_IN_Y >= USBC_CLEARANCE, "no room for the USB-C plug"
+assert PI_Y0 + PI_WIDTH <= HALF_IN_Y - 4.0, "GPIO edge too close to the front wall"
 assert PI_Y0 > SLOT_Y_IN + 6.0, "puck cable would drop onto the Pi, not behind it"
 assert OPENING_DIA >= 60.0, "opening too small to push the puck out"
 assert PUCK_BASE_DIA < RECESS_DIA - 2 * 4.0, "base too close to the pocket wall for the cable"
 assert PUCK_STRAIGHT_H < RECESS_DEPTH, "straight band must be inside the pocket"
-assert min(INTAKE_YS) - INTAKE_W / 2 > -WALL_FLAT_HALF, "intake runs into the corner radius"
-assert max(INTAKE_YS) + INTAKE_W / 2 < WALL_FLAT_HALF, "intake runs into the corner radius"
-assert min(VENT_YS) - VENT_W / 2 > -WALL_FLAT_HALF, "vents run into the corner radius"
-assert max(VENT_YS) + VENT_W / 2 < WALL_FLAT_HALF, "vents run into the corner radius"
+assert min(INTAKE_YS) - INTAKE_W / 2 > -WALL_FLAT_HALF_Y, "intake runs into the corner radius"
+assert max(INTAKE_YS) + INTAKE_W / 2 < WALL_FLAT_HALF_Y, "intake runs into the corner radius"
+assert min(VENT_YS) - VENT_W / 2 > -WALL_FLAT_HALF_Y, "vents run into the corner radius"
+assert max(VENT_YS) + VENT_W / 2 < WALL_FLAT_HALF_Y, "vents run into the corner radius"
 assert VENT_Z0 > FAN_FACE_Z, "exhaust slots should sit above the fan, not beside it"
 assert POWER_HOLE_Z - POWER_HOLE_H / 2 > FLOOR, "power cable hole breaks into the floor"
-assert abs(USBC_X) + POWER_HOLE_W / 2 < WALL_FLAT_HALF, "power hole runs into the corner radius"
+assert abs(USBC_X) + POWER_HOLE_W / 2 < WALL_FLAT_HALF_X, "power hole runs into the corner radius"
+assert SLOT_Y_OUT > -GROOVE_IN_Y / 2 + 1.0, "cable slot reaches the lid groove"
 assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
-assert GROOVE_OUT < OUTER - 2.0, "lid rim outside the groove too thin"
+assert GROOVE_OUT_X < OUTER_X - 2.0, "lid rim outside the groove too thin"
 assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
 assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
 assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
@@ -381,20 +388,20 @@ assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
 # ---------------------------------------------------------------------------
 with BuildPart() as box_builder:
     with BuildSketch():
-        RectangleRounded(OUTER, OUTER, CORNER_R)
+        RectangleRounded(OUTER_X, OUTER_Y, CORNER_R)
     extrude(amount=BOX_HEIGHT)
     chamfer(box_builder.faces().sort_by(Axis.Z)[0].edges(), length=EDGE_CHAMFER)
 
     # Cavity, up to the wall top
     with BuildSketch(Plane.XY.offset(FLOOR)):
-        RectangleRounded(INNER, INNER, CORNER_R - WALL)
+        RectangleRounded(INNER_X, INNER_Y, CORNER_R - WALL)
     extrude(amount=BOX_HEIGHT - FLOOR, mode=Mode.SUBTRACT)
 
     # Ledge: cut the outer part of the wall away at the top, leaving the inner lip
     with BuildSketch(Plane.XY.offset(LID_BOTTOM_Z)):
-        RectangleRounded(OUTER + 2, OUTER + 2, CORNER_R + 1)
+        RectangleRounded(OUTER_X + 2, OUTER_Y + 2, CORNER_R + 1)
         RectangleRounded(
-            OUTER - 2 * LEDGE_W, OUTER - 2 * LEDGE_W, CORNER_R - LEDGE_W, mode=Mode.SUBTRACT
+            OUTER_X - 2 * LEDGE_W, OUTER_Y - 2 * LEDGE_W, CORNER_R - LEDGE_W, mode=Mode.SUBTRACT
         )
     extrude(amount=LIP_HEIGHT + 1, mode=Mode.SUBTRACT)
 
@@ -411,16 +418,16 @@ with BuildPart() as box_builder:
 
     # Intake slots in the +X wall, at floor level near the fan
     for iy in INTAKE_YS:
-        with Locations(Pos(OUTER / 2 - WALL / 2, iy, INTAKE_Z0 + INTAKE_H / 2)):
+        with Locations(Pos(OUTER_X / 2 - WALL / 2, iy, INTAKE_Z0 + INTAKE_H / 2)):
             Box(WALL + 2, INTAKE_W, INTAKE_H, mode=Mode.SUBTRACT)
 
     # Exhaust slots in the -X wall, up near the lid
     for vy in VENT_YS:
-        with Locations(Pos(-OUTER / 2 + WALL / 2, vy, VENT_Z0 + VENT_H / 2)):
+        with Locations(Pos(-OUTER_X / 2 + WALL / 2, vy, VENT_Z0 + VENT_H / 2)):
             Box(WALL + 2, VENT_W, VENT_H, mode=Mode.SUBTRACT)
 
     # Power cable hole in the -Y wall, at floor level below the receptacle
-    with Locations(Pos(USBC_X, -OUTER / 2 + WALL / 2, POWER_HOLE_Z)):
+    with Locations(Pos(USBC_X, -OUTER_Y / 2 + WALL / 2, POWER_HOLE_Z)):
         Box(POWER_HOLE_W, WALL + 2, POWER_HOLE_H, mode=Mode.SUBTRACT)
 
 box_part = box_builder.part
@@ -431,15 +438,15 @@ box_part = box_builder.part
 # ---------------------------------------------------------------------------
 with BuildPart() as lid_builder:
     with BuildSketch():
-        RectangleRounded(LID_SIZE, LID_SIZE, LID_CORNER_R)
+        RectangleRounded(OUTER_X, OUTER_Y, LID_CORNER_R)
     extrude(amount=LID_THICK)
     fillet(lid_builder.faces().sort_by(Axis.Z)[-1].edges(), radius=LID_TOP_FILLET)
 
     # Groove in the underside for the box's lip
     with BuildSketch(Plane.XY.offset(-1)):
-        RectangleRounded(GROOVE_OUT, GROOVE_OUT, CORNER_R - LEDGE_W + JOINT_CLEARANCE)
+        RectangleRounded(GROOVE_OUT_X, GROOVE_OUT_Y, CORNER_R - LEDGE_W + JOINT_CLEARANCE)
         RectangleRounded(
-            GROOVE_IN, GROOVE_IN, CORNER_R - WALL - JOINT_CLEARANCE, mode=Mode.SUBTRACT
+            GROOVE_IN_X, GROOVE_IN_Y, CORNER_R - WALL - JOINT_CLEARANCE, mode=Mode.SUBTRACT
         )
     extrude(amount=1 + GROOVE_DEPTH, mode=Mode.SUBTRACT)
 
@@ -599,8 +606,8 @@ power_cable = _cable(
     [
         (USBC_X, usbc_tail, USBC_Z),
         (USBC_X, usbc_tail - 14.0, USBC_Z - 6.0),
-        (USBC_X, -HALF_IN + 8.0, POWER_HOLE_Z),
-        (USBC_X, -OUTER / 2 - 20.0, POWER_HOLE_Z),
+        (USBC_X, -HALF_IN_Y + 8.0, POWER_HOLE_Z),
+        (USBC_X, -OUTER_Y / 2 - 20.0, POWER_HOLE_Z),
     ],
     CABLE_DIA / 2,
 )
@@ -620,10 +627,10 @@ cable_exit = (0.0, -(PUCK_BASE_DIA / 2 + 1.0), puck_z + PUCK_CABLE_EXIT_Z)
 JABRA_CABLE_PATH = [
     (usb_a_face - USB_A_ADAPTER[1], usb_a_y, usb_a_z),
     (usb_a_face - USB_A_ADAPTER[1] - 8.0, usb_a_y, usb_a_z - 8.0),
-    (-HALF_IN + 6.0, usb_a_y - 10.0, FLOOR + 12.0),
-    (-HALF_IN + 6.0, -HALF_IN + 20.0, FLOOR + 6.0),
-    (-30.0, -HALF_IN + 6.0, FLOOR + 6.0),
-    (30.0, -HALF_IN + 6.0, FLOOR + 6.0),
+    (-HALF_IN_X + 6.0, usb_a_y - 10.0, FLOOR + 12.0),
+    (-HALF_IN_X + 6.0, -HALF_IN_Y + 20.0, FLOOR + 6.0),
+    (-30.0, -HALF_IN_Y + 6.0, FLOOR + 6.0),
+    (30.0, -HALF_IN_Y + 6.0, FLOOR + 6.0),
     (40.0, -40.0, FLOOR + 8.0),
     (0.0, -(RECESS_DIA / 2 - 5.0), FLOOR + 14.0),
     (0.0, -(RECESS_DIA / 2 - 5.0), puck_z - 2.0),
@@ -808,13 +815,12 @@ if __name__ == "__main__":
     box_cm3 = box_part.volume / 1000
     lid_cm3 = lid_part.volume / 1000
     total_h = max(puck_z + PUCK_HEIGHT, LID_BOTTOM_Z + LID_THICK)
-    usbc_room = PI_Y0 + HALF_IN
-    usb_a_room = usb_a_face + HALF_IN
-    print(f"  box:        {OUTER:.0f} x {OUTER:.0f} x {BOX_HEIGHT:.0f} mm, {box_cm3:.0f} cm3")
-    print(f"  lid:        {LID_SIZE:.1f} x {LID_SIZE:.1f} x {LID_THICK:.1f} mm, {lid_cm3:.0f} cm3")
-    print(
-        f"  assembled:  {OUTER:.0f} x {OUTER:.0f} x {total_h:.1f} mm, puck {PUCK_PROUD:.1f} proud"
-    )
+    usbc_room = PI_Y0 + HALF_IN_Y
+    usb_a_room = usb_a_face + HALF_IN_X
+    print(f"  box:        {OUTER_X:.0f} x {OUTER_Y:.0f} x {BOX_HEIGHT:.0f} mm, {box_cm3:.0f} cm3")
+    print(f"  lid:        {OUTER_X:.0f} x {OUTER_Y:.0f} x {LID_THICK:.1f} mm, {lid_cm3:.0f} cm3")
+    size = f"{OUTER_X:.0f} x {OUTER_Y:.0f} x {total_h:.1f} mm"
+    print(f"  assembled:  {size}, puck {PUCK_PROUD:.1f} proud")
     print(f"  puck nest:  Ø{RECESS_DIA:.1f} x {RECESS_DEPTH:.1f} deep, ring to Ø{OPENING_DIA:.0f}")
     print(
         f"  Pi:         x {PI_X_USB:.1f} .. {PI_X_END:.1f}, y {PI_Y0:.1f} .. {PI_Y0 + PI_WIDTH:.1f}"
