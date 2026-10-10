@@ -83,10 +83,14 @@ Walls (angles seen from above, +X = 0°, +Y = 90° = front)
 ---------------------------------------------------------
 - Intake: 11 vertical slots at floor level centred on 0° (+X, microSD end).
 - Exhaust: 12 vertical slots high up centred on 180° (-X, USB-A end).
-- Power cable hole: 13.5 x 9 mm at floor level at -90° (back). The USB-C
-  plug is pushed through it from outside during assembly, then onto the
-  right-angle adapter on the receptacle; the plug body lies along the back
-  edge of the board.
+- Power cable notch: 5 x 5.5 mm at -90° (back), open to the underside. The
+  flat 4 x 2 mm power cable carries an inline ON/OFF switch box (16 x 17
+  mm) and a USB-C plug, so nothing is threaded through a hole: plug the
+  USB-C into the right-angle adapter on the receptacle (the plug body lies
+  along the back edge of the board), drop the cable into the notch from
+  below, then set the box down. The cable lies flat on the floor top and
+  leaves at the bottom of the back wall, so the opening is barely bigger
+  than the cable.
 - Front (+90°) closed.
 - The Jabra's USB-A adapter plugs into a right-angle adapter on the Pi's
   USB 3.0 stack and lies along the -X end of the board toward the back.
@@ -183,7 +187,7 @@ PUCK_CLEARANCE = 0.7  # per side around the straight band; 1.5 felt loose in the
 PUCK_PROUD = 0.5  # how far the puck's top stands above the lid (0 = dead flush)
 RING_OVERLAP = 8.0  # pocket floor ring reaches this far in under the base rim
 CABLE_SLOT_W = 10.0  # radial slot in the ring for the puck's Ø3.5 cable (toward -Y)
-CABLE_DIA = 3.5  # Jabra cable (measured); used for the PSU cable stand-in too
+CABLE_DIA = 3.5  # Jabra cable (measured)
 
 # --- Raspberry Pi 4 B (mm, board-local: x from the microSD end, y from the USB-C edge) ---
 PI_LENGTH = 85.0
@@ -221,8 +225,9 @@ COOLER_FAN_T = 10.0  # fan frame depth, preview only
 L_ADAPTER_DEPTH = 12.0  # right-angle adapter beyond the port face (~10 measured) + room
 USB_A_ADAPTER = (8.0, 45.0, 16.0)  # Jabra adapter x, y, z when lying along the board end
 USBC_PLUG = (30.0, 11.5, 7.0)  # PSU plug body x, y, z when lying along the board edge
-POWER_HOLE_W = 13.5  # power cable hole: the 11.5 x 7 plug overmould must pass (1 mm per side)
-POWER_HOLE_H = 9.0
+POWER_CABLE_W = 4.0  # flat PSU cable, width when lying flat (measured)
+POWER_CABLE_T = 2.0  # flat PSU cable thickness (measured)
+POWER_NOTCH_CLEARANCE = 0.5  # per side, cable to the notch
 
 # --- Box (mm) ---
 OUTER_DIA = 142.0  # outer diameter — Pi + both right-angle arms need Ø127 inside
@@ -257,7 +262,9 @@ VENT_H = 24.0
 VENT_LID_GAP = 4.0  # wall left between the slot top and the ledge
 
 POWER_ANGLE = -90.0  # degrees; the back
-POWER_HOLE_Z = 8.5  # power cable hole centre above the box underside
+POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # notch width along the wall
+POWER_NOTCH_H = FLOOR + POWER_CABLE_T + POWER_NOTCH_CLEARANCE  # notch height from the underside
+POWER_CABLE_Z = FLOOR + POWER_CABLE_T / 2  # cable centre, lying on the floor top
 
 # --- Lid (mm) ---
 LID_FLOOR = 2.4  # pocket floor ring thickness
@@ -347,7 +354,7 @@ assert SLOT_Y_OUT > -GROOVE_R_IN + 1.0, "cable slot reaches the lid groove"
 assert R_OUT - GROOVE_R_OUT >= 1.5, "lid rim outside the groove too thin"
 assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
 assert VENT_Z0 > FAN_FACE_Z, "exhaust slots should sit above the fan, not beside it"
-assert POWER_HOLE_Z - POWER_HOLE_H / 2 > FLOOR, "power cable hole breaks into the floor"
+assert POWER_NOTCH_H > FLOOR + POWER_CABLE_T, "power cable cannot lie on the floor top"
 assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
 assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
 assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
@@ -393,15 +400,16 @@ with BuildPart() as box_builder:
             Circle(radius=STUB_HOLE_DIA / 2)
     extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
 
-    # Intake slots at floor level, exhaust slots up near the lid, power hole
+    # Intake slots at floor level, exhaust slots up near the lid, power cable
+    # notch open to the underside
     for ang in INTAKE_ANGLES:
         with Locations(_wall_cut(ang, INTAKE_Z0 + INTAKE_H / 2, INTAKE_W, INTAKE_H)):
             Box(WALL + 2, INTAKE_W, INTAKE_H, mode=Mode.SUBTRACT)
     for ang in VENT_ANGLES:
         with Locations(_wall_cut(ang, VENT_Z0 + VENT_H / 2, VENT_W, VENT_H)):
             Box(WALL + 2, VENT_W, VENT_H, mode=Mode.SUBTRACT)
-    with Locations(_wall_cut(POWER_ANGLE, POWER_HOLE_Z, POWER_HOLE_W, POWER_HOLE_H)):
-        Box(WALL + 2, POWER_HOLE_W, POWER_HOLE_H, mode=Mode.SUBTRACT)
+    with Locations(_wall_cut(POWER_ANGLE, (POWER_NOTCH_H - 1) / 2, POWER_NOTCH_W, 0)):
+        Box(WALL + 2, POWER_NOTCH_W, POWER_NOTCH_H + 1, mode=Mode.SUBTRACT)
 
 box_part = box_builder.part
 
@@ -598,10 +606,10 @@ usbc_plug = _span_box(
 POWER_CABLE_PATH = [
     (USBC_ARM_X[0], USBC_CABLE_Y, USBC_Z),
     (USBC_ARM_X[0] - 8.0, USBC_CABLE_Y - 8.0, USBC_Z - 8.0),
-    (0.0, -R_IN + 6.0, POWER_HOLE_Z),
-    (0.0, -R_OUT - 20.0, POWER_HOLE_Z),
+    (0.0, -R_IN + 6.0, POWER_CABLE_Z),
+    (0.0, -R_OUT - 20.0, POWER_CABLE_Z),
 ]
-power_cable = _cable(POWER_CABLE_PATH, CABLE_DIA / 2)
+power_cable = _cable(POWER_CABLE_PATH, POWER_CABLE_T / 2)
 
 # Right-angle USB-A adapter on the USB 3.0 stack, Jabra adapter lying along the
 # board end toward the back, cable looping over the floor and up into the puck
@@ -782,8 +790,8 @@ if __name__ == "__main__":
     print("  Pi screws:  4 x M2.5 x 6 from the solder side (replace the long brass standoffs)")
     tests = [test_collar, test_cup, test_box, test_lid, test_jig]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
-    hole = f"{POWER_HOLE_W:.1f} x {POWER_HOLE_H:.1f} mm"
-    print(f"  power hole: at {POWER_ANGLE:.0f} deg, z={POWER_HOLE_Z:.1f}, {hole}")
+    notch = f"{POWER_NOTCH_W:.1f} wide x {POWER_NOTCH_H:.1f} high from the underside"
+    print(f"  power notch: at {POWER_ANGLE:.0f} deg, {notch}")
 
     if show is not None:
         try:
