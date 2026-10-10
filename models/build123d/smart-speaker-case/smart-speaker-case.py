@@ -102,13 +102,22 @@ Lid
 
 Fits
 ----
-- Pi: the cooler's bracket is mounted on 6 mm female-female standoffs at
-  the Pi's four corner holes (PI_FOOT_H), so what lands on the pillar tops
-  is the bracket, not the board. Remove the bracket-side screws and use
-  M2.5 x 14..16 from the solder side instead: through the board, through the
-  threaded standoff, through the bracket hole and into the Ø2.2 blind hole
-  in the pillar (self-tapping; heat-set inserts if you have them). Only the
-  screw heads stand above the solder side (BOARD_TOP_CLEARANCE is 4 mm).
+- Pi: at each corner hole the cooler kit stacks, from the component face
+  outward, a 6 mm brass standoff, the 1.5 mm bracket plate, an M2.5 nut
+  (4.9 mm across flats) and 2.4 mm of thread stub (all measured). With
+  the board face down this stack hangs below the board, and the nut is the
+  lowest flat surface — so the nut is what the pillar carries. Each pillar
+  top is flat at the nut's face with a Ø3.2 hole that the thread stub drops
+  into; the stub locates the Pi sideways. No screws into the pillars.
+  Nothing wider is possible: the official drawing puts the GPIO and PoE
+  header bodies 3.6 mm and the board edge 3.5 mm from the hole centres, so
+  there is no room for a ring around the nut. The pillar top sits 1 mm
+  below the 8.5 mm GPIO header, clear of it.
+- The kit's long brass standoffs on the solder side would hit the lid.
+  Replace them with M2.5 x 6 screws from the solder side into the 6 mm
+  standoffs; only those screw heads then stand above the solder side
+  (BOARD_TOP_CLEARANCE is 4 mm). The Pi assembly is held down by its own
+  weight and cannot lift more than ~1.5 mm before meeting the lid.
 - PI_ASSEMBLY_H (38 mm) is the user's measurement of the bare Pi + cooler,
   board solder side to the face of the fan, no base plate. The pillar
   height is derived from it so the fan ends up exactly FAN_FLOOR_GAP above
@@ -128,13 +137,15 @@ Fit tests (print these first, they are cheap)
   and lid with the real wall, ledge, lip, groove, corner radius and 0.25 mm
   clearance. The lid should drop onto the box without force, sit flush on
   all four sides and not slide. The box also carries the 13.5 x 9 mm power
-  hole (push the PSU plug through) and one Ø8 pillar stub with the Ø2.2
-  hole (try the M2.5 screw and the bracket).
+  hole (push the PSU plug through) and one pillar top with the Ø3.2 stub
+  hole: set one corner of the Pi assembly on it, nut down, and check the
+  thread stub drops in and the nut sits flat.
 
 Print notes
 -----------
 - Box: 164 x 164 x 59 mm, open side up, no supports. The slots and the
-  cable hole are short bridges; the standoffs are plain pillars.
+  cable hole are short bridges; the pillars are plain, with a small hole
+  in the top.
 - Lid: 164 x 164 x 34.9 mm, pocket side up, flat on the bed, no
   supports. The rim around the pocket is a solid block in the model and
   prints as walls plus infill; 15 % is plenty.
@@ -159,8 +170,9 @@ Sources
   9 and 27 from the USB-C edge (Z 16.0), Ethernet at 45.75 (Z 13.5),
   GPIO header Z 8.5.
 - Cooler: user's own low-profile ICE-tower type, 40 mm fan on top; 38 mm
-  from board underside to fan face and 6 mm corner standoffs, measured by
-  the user without the plate.
+  from board underside to fan face, 6 mm corner standoffs, 1.5 mm bracket,
+  nuts 4.9 mm across flats with 2.4 mm of thread stub, measured by the
+  user without the plate. Nut height 2 mm assumed (standard M2.5).
 - Plug clearances: 50 mm (USB-C) and 60 mm (USB-A), PSU plug overmould
   11.5 x 7 mm, measured by the user.
 """
@@ -204,7 +216,7 @@ PUCK_HEIGHT = 33.0  # overall height (tech sheet)
 PUCK_STRAIGHT_H = 7.5  # straight band below the top rim (measured)
 PUCK_BASE_DIA = 91.5  # bottom of the cone (measured); base is a flat rubber ring
 PUCK_CABLE_EXIT_Z = 8.0  # cable leaves the cone this far above the base (measured)
-PUCK_CLEARANCE = 1.5  # per side around the straight band — loose drop-in nest
+PUCK_CLEARANCE = 0.7  # per side around the straight band; 1.5 felt loose in the collar test
 PUCK_PROUD = 0.5  # how far the puck's top stands above the lid (0 = dead flush)
 RING_OVERLAP = 8.0  # pocket floor ring reaches this far in under the base rim
 CABLE_SLOT_W = 10.0  # radial slot in the ring for the puck's Ø3.5 cable (toward -Y)
@@ -232,7 +244,12 @@ PI_SD_OVERHANG = 2.5  # microSD card past the board edge
 PI_SOC_X = 32.5
 PI_SOC_Y = 25.75
 PI_ASSEMBLY_H = 38.0  # board solder side to the cooler's fan face, measured (no base plate)
-PI_FOOT_H = 6.0  # cooler's corner standoffs: component face to the bracket that lands on the pillar
+PI_STANDOFF_H = 6.0  # cooler kit's brass standoff on the component side (measured)
+BRACKET_T = 1.5  # cooler bracket plate on top of the standoff (measured)
+NUT_AF = 4.9  # M2.5 nut across flats (measured)
+NUT_H = 2.0  # M2.5 nut height — standard value, not measured
+THREAD_STUB = 2.4  # standoff thread showing beyond the nut (measured)
+SCREW_HEAD_H = 2.5  # M2.5 pan head on the solder side, preview only
 COOLER_SIZE = 40.0  # fan / fin stack footprint, preview only
 COOLER_FAN_T = 10.0  # fan frame depth, preview only
 
@@ -257,9 +274,9 @@ EDGE_CHAMFER = 0.8  # bed-side edges, hides elephant foot
 
 FAN_FLOOR_GAP = 10.0  # intake clearance between the fan face and the floor
 BOARD_TOP_CLEARANCE = 4.0  # solder-side pins to the lid underside
-STANDOFF_DIA = 8.0  # standoff outer diameter — tall pillars, so fatter than usual
-SCREW_HOLE_DIA = 2.2  # M2.5 self-tapping
-SCREW_HOLE_DEPTH = 6.0  # blind, from the standoff top
+STANDOFF_DIA = 8.0  # pillar diameter: covers the nut, passes under the GPIO header
+STUB_HOLE_DIA = 3.2  # hole in the pillar top for the M2.5 thread stub
+STUB_HOLE_EXTRA = 1.0  # hole deeper than the stub so the nut, not the stub, lands
 CENTRE_CLEAR_Y = 10.0  # Pi's USB-C edge sits this far +Y of centre
 POWER_HOLE_Z = 8.5  # power cable hole centre above the box underside
 
@@ -289,6 +306,8 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 INNER = OUTER - 2 * WALL
 HALF_IN = INNER / 2
 COOLER_DROP = PI_ASSEMBLY_H - PI_BOARD_T  # component face down to the fan face
+PI_FOOT_H = PI_STANDOFF_H + BRACKET_T + NUT_H  # component face down to the nut face
+STUB_HOLE_DEPTH = THREAD_STUB + STUB_HOLE_EXTRA
 STANDOFF_H = FAN_FLOOR_GAP + COOLER_DROP - PI_FOOT_H  # floor top to the pillar top
 PI_FACE_Z = FLOOR + STANDOFF_H + PI_FOOT_H  # component side of the board (facing down)
 INNER_HEIGHT = PI_FACE_Z - FLOOR + PI_BOARD_T + BOARD_TOP_CLEARANCE  # floor top to lid underside
@@ -347,7 +366,9 @@ assert POWER_HOLE_Z - POWER_HOLE_H / 2 > FLOOR, "power cable hole breaks into th
 assert abs(USBC_X) + POWER_HOLE_W / 2 < WALL_FLAT_HALF, "power hole runs into the corner radius"
 assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
 assert GROOVE_OUT < OUTER - 2.0, "lid rim outside the groove too thin"
-assert SCREW_HOLE_DEPTH < STANDOFF_H, "screw hole runs out of the standoff"
+assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
+assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
+assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
 
 
 # ---------------------------------------------------------------------------
@@ -372,15 +393,16 @@ with BuildPart() as box_builder:
         )
     extrude(amount=LIP_HEIGHT + 1, mode=Mode.SUBTRACT)
 
-    # Pi standoffs (tall pillars) with blind screw holes from the top
+    # Pi pillars: the cooler's corner nuts land on the flat tops, the thread
+    # stubs drop into the holes
     with BuildSketch(Plane.XY.offset(FLOOR)):
         with Locations(*PI_HOLES):
             Circle(radius=STANDOFF_DIA / 2)
     extrude(amount=STANDOFF_H)
     with BuildSketch(Plane.XY.offset(FLOOR + STANDOFF_H)):
         with Locations(*PI_HOLES):
-            Circle(radius=SCREW_HOLE_DIA / 2)
-    extrude(amount=-SCREW_HOLE_DEPTH, mode=Mode.SUBTRACT)
+            Circle(radius=STUB_HOLE_DIA / 2)
+    extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
 
     # Intake slots in the +X wall, at floor level near the fan
     for iy in INTAKE_YS:
@@ -528,13 +550,27 @@ pi_ports = Compound(
         ),
     ]
 )
-cooler_feet = Compound(
-    children=[
+
+
+def _corner_stack(x: float, y: float) -> list:
+    """Cooler mounting stack at one corner hole, board face down: standoff,
+    bracket pad, nut, thread stub below; screw head above the solder side."""
+    down = Align.MAX  # grows downward from the given z
+    return [
+        Pos(x, y, PI_FACE_Z)
+        * Cylinder(radius=2.75, height=PI_STANDOFF_H, align=(Align.CENTER, Align.CENTER, down)),
+        Pos(x, y, PI_FACE_Z - PI_STANDOFF_H)
+        * Cylinder(radius=4.5, height=BRACKET_T, align=(Align.CENTER, Align.CENTER, down)),
+        Pos(x, y, PI_FACE_Z - PI_STANDOFF_H - BRACKET_T)
+        * Cylinder(radius=NUT_AF / 1.732, height=NUT_H, align=(Align.CENTER, Align.CENTER, down)),
         Pos(x, y, PI_FACE_Z - PI_FOOT_H)
-        * Cylinder(radius=2.5, height=PI_FOOT_H, align=(Align.CENTER, Align.CENTER, Align.MIN))
-        for x, y in PI_HOLES
+        * Cylinder(radius=1.25, height=THREAD_STUB, align=(Align.CENTER, Align.CENTER, down)),
+        Pos(x, y, PI_FACE_Z + PI_BOARD_T)
+        * Cylinder(radius=2.25, height=SCREW_HEAD_H, align=(Align.CENTER, Align.CENTER, Align.MIN)),
     ]
-)
+
+
+cooler_feet = Compound(children=[s for x, y in PI_HOLES for s in _corner_stack(x, y)])
 cooler_fins = Pos(COOLER_X, COOLER_Y, FAN_FACE_Z + COOLER_FAN_T) * Box(
     COOLER_SIZE,
     COOLER_SIZE,
@@ -689,17 +725,17 @@ with BuildPart() as test_box_builder:
     # the real power-cable hole, in the -Y wall
     with Locations(Pos(0, -TEST_RABBET_OUTER / 2 + WALL / 2, POWER_HOLE_Z)):
         Box(POWER_HOLE_W, WALL + 2, POWER_HOLE_H, mode=Mode.SUBTRACT)
-    # one pillar stub with the M2.5 hole
+    # one pillar top with the thread-stub hole
     with Locations(Pos(0, 0, TEST_RABBET_FLOOR)):
         Cylinder(
             radius=STANDOFF_DIA / 2,
             height=TEST_PILLAR_H,
             align=(Align.CENTER, Align.CENTER, Align.MIN),
         )
-    with Locations(Pos(0, 0, TEST_RABBET_FLOOR + TEST_PILLAR_H - SCREW_HOLE_DEPTH)):
+    with Locations(Pos(0, 0, TEST_RABBET_FLOOR + TEST_PILLAR_H - STUB_HOLE_DEPTH)):
         Cylinder(
-            radius=SCREW_HOLE_DIA / 2,
-            height=SCREW_HOLE_DEPTH + 1,
+            radius=STUB_HOLE_DIA / 2,
+            height=STUB_HOLE_DEPTH + 1,
             align=(Align.CENTER, Align.CENTER, Align.MIN),
             mode=Mode.SUBTRACT,
         )
@@ -755,8 +791,8 @@ if __name__ == "__main__":
         f"  Pi:         x {PI_X_USB:.1f} .. {PI_X_END:.1f}, y {PI_Y0:.1f} .. {PI_Y0 + PI_WIDTH:.1f}"
     )
     print(f"  pillars:    {STANDOFF_H:.1f} mm tall, fan face at z={FAN_FACE_Z:.1f}")
-    screw = PI_BOARD_T + PI_FOOT_H + 1.5 + SCREW_HOLE_DEPTH - 1.0
-    print(f"  Pi screws:  M2.5 x ~{screw:.0f} mm from the solder side, through the standoffs")
+    print(f"  Pi rests:   on its 4 nuts, {PI_FOOT_H:.1f} mm below the board face")
+    print("  Pi screws:  4 x M2.5 x 6 from the solder side (replace the long brass standoffs)")
     tests = [test_collar, test_cup, test_box, test_lid]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
     print(f"  plug room:  USB-C {usbc_room:.1f} mm, USB-A {usb_a_room:.1f} mm")
