@@ -83,14 +83,15 @@ Walls (angles seen from above, +X = 0°, +Y = 90° = front)
 ---------------------------------------------------------
 - Intake: 11 vertical slots at floor level centred on 0° (+X, microSD end).
 - Exhaust: 12 vertical slots high up centred on 180° (-X, USB-A end).
-- Power cable notch: 5 x 5.5 mm at -90° (back), open to the underside. The
-  flat 4 x 2 mm power cable carries an inline ON/OFF switch box (16 x 17
-  mm) and a USB-C plug, so nothing is threaded through a hole: plug the
+- Power cable: the flat 4 x 2 mm PSU cable carries an inline ON/OFF switch
+  box (16 x 17 mm). A 19 x 19 mm hole in the floor next to the back wall
+  (-90°) lets the switch box pass; a 5 mm wide slot runs from that hole
+  through the floor and the foot of the wall to the outside. Plug the
   USB-C into the right-angle adapter on the receptacle (the plug body lies
-  along the back edge of the board), drop the cable into the notch from
-  below, then set the box down. The cable lies flat on the floor top and
-  leaves at the bottom of the back wall, so the opening is barely bigger
-  than the cable.
+  along the back edge of the board), pass the switch box through the floor
+  hole, press the cable into the slot from below, then set the box down.
+  The cable runs inside the floor thickness, so the box still sits flat
+  and only a 5 x 3 mm notch shows at the bottom of the back wall.
 - Front (+90°) closed.
 - The Jabra's USB-A adapter plugs into a right-angle adapter on the Pi's
   USB 3.0 stack and lies along the -X end of the board toward the back.
@@ -227,7 +228,9 @@ USB_A_ADAPTER = (8.0, 45.0, 16.0)  # Jabra adapter x, y, z when lying along the 
 USBC_PLUG = (30.0, 11.5, 7.0)  # PSU plug body x, y, z when lying along the board edge
 POWER_CABLE_W = 4.0  # flat PSU cable, width when lying flat (measured)
 POWER_CABLE_T = 2.0  # flat PSU cable thickness (measured)
-POWER_NOTCH_CLEARANCE = 0.5  # per side, cable to the notch
+POWER_NOTCH_CLEARANCE = 0.5  # per side, cable to the slot
+SWITCH_BOX = (16.0, 17.0)  # inline ON/OFF switch box on the power cable (measured)
+SWITCH_HOLE_CLEARANCE = 1.0  # per side, switch box to the floor hole
 
 # --- Box (mm) ---
 OUTER_DIA = 142.0  # outer diameter — Pi + both right-angle arms need Ø127 inside
@@ -261,10 +264,10 @@ VENT_W = 3.0
 VENT_H = 24.0
 VENT_LID_GAP = 4.0  # wall left between the slot top and the ledge
 
-POWER_ANGLE = -90.0  # degrees; the back
-POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # notch width along the wall
-POWER_NOTCH_H = FLOOR + POWER_CABLE_T + POWER_NOTCH_CLEARANCE  # notch height from the underside
-POWER_CABLE_Z = FLOOR + POWER_CABLE_T / 2  # cable centre, lying on the floor top
+SWITCH_HOLE = max(SWITCH_BOX) + 2 * SWITCH_HOLE_CLEARANCE  # square floor hole, either way up
+SWITCH_HOLE_WALL_GAP = 2.0  # floor left between the hole and the inner wall at the back (-Y)
+POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # slot width, hole to the outside
+POWER_CABLE_Z = POWER_CABLE_T / 2  # cable centre, lying in the slot on the table
 
 # --- Lid (mm) ---
 LID_FLOOR = 2.4  # pocket floor ring thickness
@@ -320,6 +323,7 @@ USBC_EDGE = PI_Y0 - PI_USBC_OVERHANG
 USBC_ARM_Y = (USBC_EDGE - L_ADAPTER_DEPTH, USBC_EDGE)
 USBC_ARM_X = (USBC_X - 6.0 - USBC_PLUG[0], USBC_X + 6.0)  # plug body runs toward -X
 USBC_CABLE_Y = USBC_EDGE - L_ADAPTER_DEPTH / 2
+SWITCH_HOLE_Y = -(R_IN - SWITCH_HOLE_WALL_GAP - SWITCH_HOLE / 2)  # floor hole centre, at the back
 
 INTAKE_ANGLES = [
     INTAKE_ANGLE + (i - (INTAKE_COUNT - 1) / 2) * INTAKE_PITCH_DEG for i in range(INTAKE_COUNT)
@@ -354,7 +358,8 @@ assert SLOT_Y_OUT > -GROOVE_R_IN + 1.0, "cable slot reaches the lid groove"
 assert R_OUT - GROOVE_R_OUT >= 1.5, "lid rim outside the groove too thin"
 assert LIP_THICK >= 1.2, "lip thinner than three perimeters"
 assert VENT_Z0 > FAN_FACE_Z, "exhaust slots should sit above the fan, not beside it"
-assert POWER_NOTCH_H > FLOOR + POWER_CABLE_T, "power cable cannot lie on the floor top"
+assert hypot(SWITCH_HOLE / 2, SWITCH_HOLE_Y - SWITCH_HOLE / 2) < R_IN, "switch hole in the wall"
+assert FLOOR >= POWER_CABLE_T + POWER_NOTCH_CLEARANCE, "power cable thicker than the floor slot"
 assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
 assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
 assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
@@ -400,16 +405,25 @@ with BuildPart() as box_builder:
             Circle(radius=STUB_HOLE_DIA / 2)
     extrude(amount=-STUB_HOLE_DEPTH, mode=Mode.SUBTRACT)
 
-    # Intake slots at floor level, exhaust slots up near the lid, power cable
-    # notch open to the underside
+    # Intake slots at floor level, exhaust slots up near the lid
     for ang in INTAKE_ANGLES:
         with Locations(_wall_cut(ang, INTAKE_Z0 + INTAKE_H / 2, INTAKE_W, INTAKE_H)):
             Box(WALL + 2, INTAKE_W, INTAKE_H, mode=Mode.SUBTRACT)
     for ang in VENT_ANGLES:
         with Locations(_wall_cut(ang, VENT_Z0 + VENT_H / 2, VENT_W, VENT_H)):
             Box(WALL + 2, VENT_W, VENT_H, mode=Mode.SUBTRACT)
-    with Locations(_wall_cut(POWER_ANGLE, (POWER_NOTCH_H - 1) / 2, POWER_NOTCH_W, 0)):
-        Box(WALL + 2, POWER_NOTCH_W, POWER_NOTCH_H + 1, mode=Mode.SUBTRACT)
+
+    # Power cable: floor hole for the switch box, slot from it to the outside
+    with Locations(Pos(0, SWITCH_HOLE_Y, FLOOR / 2)):
+        Box(SWITCH_HOLE, SWITCH_HOLE, FLOOR + 2, mode=Mode.SUBTRACT)
+    with Locations(Pos(0, SWITCH_HOLE_Y, -1)):
+        Box(
+            POWER_NOTCH_W,
+            R_OUT + 1 + SWITCH_HOLE_Y,
+            FLOOR + 1,
+            align=(Align.CENTER, Align.MAX, Align.MIN),
+            mode=Mode.SUBTRACT,
+        )
 
 box_part = box_builder.part
 
@@ -606,7 +620,8 @@ usbc_plug = _span_box(
 POWER_CABLE_PATH = [
     (USBC_ARM_X[0], USBC_CABLE_Y, USBC_Z),
     (USBC_ARM_X[0] - 8.0, USBC_CABLE_Y - 8.0, USBC_Z - 8.0),
-    (0.0, -R_IN + 6.0, POWER_CABLE_Z),
+    (0.0, SWITCH_HOLE_Y, FLOOR + 6.0),
+    (0.0, SWITCH_HOLE_Y, POWER_CABLE_Z),
     (0.0, -R_OUT - 20.0, POWER_CABLE_Z),
 ]
 power_cable = _cable(POWER_CABLE_PATH, POWER_CABLE_T / 2)
@@ -790,8 +805,8 @@ if __name__ == "__main__":
     print("  Pi screws:  4 x M2.5 x 6 from the solder side (replace the long brass standoffs)")
     tests = [test_collar, test_cup, test_box, test_lid, test_jig]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
-    notch = f"{POWER_NOTCH_W:.1f} wide x {POWER_NOTCH_H:.1f} high from the underside"
-    print(f"  power notch: at {POWER_ANGLE:.0f} deg, {notch}")
+    hole = f"{SWITCH_HOLE:.1f} sq at y={SWITCH_HOLE_Y:.1f}"
+    print(f"  power:      floor hole {hole}, slot {POWER_NOTCH_W:.1f} x {FLOOR:.1f} to the back")
 
     if show is not None:
         try:
