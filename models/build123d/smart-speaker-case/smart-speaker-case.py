@@ -91,11 +91,13 @@ Walls (angles seen from above, +X = 0°, +Y = 90° = front)
   along the back edge of the board), pass the switch box through the floor
   hole, press the cable into the slot from below, then set the box down.
   The cable runs inside the floor thickness, so the box still sits flat
-  and only a 5 x 3 mm notch shows at the bottom of the back wall.
-- Floor hole cover: a separate plug dropped into the hole from inside. A
-  1.5 mm flange rests on the floor top, so it needs no friction to stay;
-  the plug stops 0.2 mm short of the underside so it never rocks the box.
-  A 5 x 3 mm notch on its back edge lets the cable turn up out of the slot.
+  and only a 5 x 3 mm notch shows at the bottom of the back wall. Inside,
+  it turns up through the open stretch of slot between the wall and the
+  floor hole cover.
+- Floor hole cover: a separate plain plug dropped into the hole from
+  inside, any way round. A 1.5 mm flange rests on the floor top, so it
+  needs no friction to stay; the plug stops 0.2 mm short of the underside
+  so it never rocks the box.
 - Front (+90°) closed.
 - The Jabra's USB-A adapter plugs into a right-angle adapter on the Pi's
   USB 3.0 stack and lies along the -X end of the board toward the back.
@@ -279,11 +281,9 @@ VENT_H = 24.0
 VENT_LID_GAP = 4.0  # wall left between the slot top and the ledge
 
 SWITCH_HOLE = max(SWITCH_BOX) + 2 * SWITCH_HOLE_CLEARANCE  # square floor hole, either way up
-SWITCH_HOLE_WALL_GAP = (
-    4.0  # floor between the hole and the inner wall at the back (-Y), cover flange sits here
-)
 POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # slot width, hole to the outside
-COVER_CABLE_GAP = POWER_CABLE_T + 2 * POWER_NOTCH_CLEARANCE  # cover notch depth: cable turning up
+CABLE_RISE_GAP = POWER_CABLE_T + 2 * POWER_NOTCH_CLEARANCE  # open slot between wall and flange
+SWITCH_HOLE_WALL_GAP = COVER_FLANGE_W + CABLE_RISE_GAP  # floor between hole and back inner wall
 POWER_CABLE_Z = POWER_CABLE_T / 2  # cable centre, lying in the slot on the table
 
 # --- Lid (mm) ---
@@ -495,8 +495,7 @@ lid_part = lid_builder.part
 
 
 # ---------------------------------------------------------------------------
-# Floor hole cover (print orientation: flange on the bed, plug up, cable notch
-# toward -Y; flipped about Y to install, which keeps the notch at the back)
+# Floor hole cover (print orientation: flange on the bed, plug up)
 # ---------------------------------------------------------------------------
 COVER_PLUG = SWITCH_HOLE - 2 * COVER_CLEARANCE
 COVER_PLUG_H = FLOOR - COVER_RECESS
@@ -506,15 +505,6 @@ with BuildPart() as cover_builder:
     with Locations(Pos(0, 0, COVER_FLANGE_T)):
         Box(COVER_PLUG, COVER_PLUG, COVER_PLUG_H, align=(Align.CENTER, Align.CENTER, Align.MIN))
     chamfer(cover_builder.faces().sort_by(Axis.Z)[-1].edges(), length=COVER_TIP_CHAMFER)
-    # Cable notch: from the outer edge in to the plug edge plus the cable gap
-    with Locations(Pos(0, -flange / 2 - 1, -1)):
-        Box(
-            POWER_NOTCH_W,
-            1 + COVER_FLANGE_W + COVER_CLEARANCE + COVER_CABLE_GAP,
-            COVER_FLANGE_T + COVER_PLUG_H + 2,
-            align=(Align.CENTER, Align.MIN, Align.MIN),
-            mode=Mode.SUBTRACT,
-        )
 cover_part = cover_builder.part
 
 
@@ -663,8 +653,8 @@ usbc_plug = _span_box(
 POWER_CABLE_PATH = [
     (USBC_ARM_X[0], USBC_CABLE_Y, USBC_Z),
     (USBC_ARM_X[0] - 8.0, USBC_CABLE_Y - 8.0, USBC_Z - 8.0),
-    (0.0, SWITCH_HOLE_Y, FLOOR + 6.0),
-    (0.0, SWITCH_HOLE_Y, POWER_CABLE_Z),
+    (0.0, -R_IN + CABLE_RISE_GAP / 2, FLOOR + 6.0),
+    (0.0, -R_IN + CABLE_RISE_GAP / 2, POWER_CABLE_Z),
     (0.0, -R_OUT - 20.0, POWER_CABLE_Z),
 ]
 power_cable = _cable(POWER_CABLE_PATH, POWER_CABLE_T / 2)
