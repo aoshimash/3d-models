@@ -85,19 +85,18 @@ Walls (angles seen from above, +X = 0°, +Y = 90° = front)
 - Exhaust: 12 vertical slots high up centred on 180° (-X, USB-A end).
 - Power cable: the flat 4 x 2 mm PSU cable carries an inline ON/OFF switch
   box (16 x 17 mm). A 19 x 19 mm hole in the floor next to the back wall
-  (-90°) lets the switch box pass; a 5 mm wide slot runs from that hole
-  through the floor and the foot of the wall to the outside. Plug the
-  USB-C into the right-angle adapter on the receptacle (the plug body lies
-  along the back edge of the board), pass the switch box through the floor
-  hole, press the cable into the slot from below, then set the box down.
-  The cable runs inside the floor thickness, so the box still sits flat
-  and only a 5 x 3 mm notch shows at the bottom of the back wall. Inside,
-  it turns up through the open stretch of slot between the wall and the
-  floor hole cover.
-- Floor hole cover: a separate plain plug dropped into the hole from
-  inside, any way round. A 1.5 mm flange rests on the floor top, so it
-  needs no friction to stay; the plug stops 0.2 mm short of the underside
-  so it never rocks the box.
+  lets the switch box pass; a 5 mm wide notch in the foot of the back wall
+  (-90°), open to the underside and reaching 2.5 mm above the floor top,
+  lets the cable out. Plug the USB-C into the right-angle adapter on the
+  receptacle (the plug body lies along the back edge of the board), pass
+  the switch box down through the floor hole, lay the cable into the wall
+  notch from below, drop the cover into the hole from inside, then set the
+  box down. With the cover in, the floor is closed; the cable lies on the
+  floor top and leaves through the notch, the only opening in the wall.
+- Floor hole cover: a separate plain plug, any way round. Its 1.5 mm
+  flange rests on the floor top, so it cannot fall out when the box is
+  lifted and needs no friction to stay; the plug is the full floor
+  thickness, flush with the underside.
 - Front (+90°) closed.
 - The Jabra's USB-A adapter plugs into a right-angle adapter on the Pi's
   USB 3.0 stack and lies along the -X end of the board toward the back.
@@ -122,8 +121,8 @@ Fit tests (all but the round joint pair already printed and passed)
 - fit-test-pillars.stl : the four real pillars at the real pitch on a
   plate; the whole Pi assembly sits on it, nuts down.
 - fit-test-power-plate.stl + power-cover.stl : a floor-thickness plate with
-  the real switch hole and cable slot; the switch box must pass, the cable
-  lie in the slot, and the cover drop in over it.
+  the real switch hole; the switch box must pass and the cover drop in
+  flush.
 - fit-test-joint-box.stl / fit-test-joint-lid.stl : Ø60 box and lid with
   the real wall, ledge, lip, groove and clearance — the square version of
   this pair fit perfectly; this one only adds the curvature.
@@ -239,13 +238,12 @@ USB_A_ADAPTER = (8.0, 45.0, 16.0)  # Jabra adapter x, y, z when lying along the 
 USBC_PLUG = (30.0, 11.5, 7.0)  # PSU plug body x, y, z when lying along the board edge
 POWER_CABLE_W = 4.0  # flat PSU cable, width when lying flat (measured)
 POWER_CABLE_T = 2.0  # flat PSU cable thickness (measured)
-POWER_NOTCH_CLEARANCE = 0.5  # per side, cable to the slot
+POWER_NOTCH_CLEARANCE = 0.5  # per side, cable to the wall notch
 SWITCH_BOX = (16.0, 17.0)  # inline ON/OFF switch box on the power cable (measured)
 SWITCH_HOLE_CLEARANCE = 1.0  # per side, switch box to the floor hole
 COVER_CLEARANCE = 0.25  # per side, cover plug to the floor hole (drop-in, like the lid joint)
 COVER_FLANGE_W = 1.5  # flange beyond the hole on each side, rests on the floor top
 COVER_FLANGE_T = 1.2  # flange thickness
-COVER_RECESS = 0.2  # plug stops this far short of the box underside
 COVER_TIP_CHAMFER = 0.4  # plug tip, slips past elephant foot at the hole's bottom edge
 
 # --- Box (mm) ---
@@ -280,11 +278,11 @@ VENT_W = 3.0
 VENT_H = 24.0
 VENT_LID_GAP = 4.0  # wall left between the slot top and the ledge
 
+POWER_ANGLE = -90.0  # degrees; the back
+POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # wall notch width
+POWER_NOTCH_H = FLOOR + POWER_CABLE_T + POWER_NOTCH_CLEARANCE  # notch height from the underside
 SWITCH_HOLE = max(SWITCH_BOX) + 2 * SWITCH_HOLE_CLEARANCE  # square floor hole, either way up
-POWER_NOTCH_W = POWER_CABLE_W + 2 * POWER_NOTCH_CLEARANCE  # slot width, hole to the outside
-CABLE_RISE_GAP = POWER_CABLE_T + 2 * POWER_NOTCH_CLEARANCE  # open slot between wall and flange
-SWITCH_HOLE_WALL_GAP = COVER_FLANGE_W + CABLE_RISE_GAP  # floor between hole and back inner wall
-POWER_CABLE_Z = POWER_CABLE_T / 2  # cable centre, lying in the slot on the table
+SWITCH_HOLE_WALL_GAP = 4.0  # floor between the hole and the back inner wall; room for the flange
 
 # --- Lid (mm) ---
 LID_FLOOR = 2.4  # pocket floor ring thickness
@@ -378,7 +376,7 @@ assert VENT_Z0 > FAN_FACE_Z, "exhaust slots should sit above the fan, not beside
 assert hypot(SWITCH_HOLE / 2, SWITCH_HOLE_Y - SWITCH_HOLE / 2) < R_IN, "switch hole in the wall"
 _flange_half = SWITCH_HOLE / 2 + COVER_FLANGE_W
 assert hypot(_flange_half, SWITCH_HOLE_Y - _flange_half) < R_IN - 0.5, "cover flange hits the wall"
-assert FLOOR >= POWER_CABLE_T + POWER_NOTCH_CLEARANCE, "power cable thicker than the floor slot"
+assert POWER_NOTCH_H > FLOOR + POWER_CABLE_T, "power cable cannot lie on the floor top"
 assert STUB_HOLE_DEPTH < STANDOFF_H, "stub hole runs out of the pillar"
 assert STANDOFF_DIA >= NUT_AF / 0.866 + 1.0, "pillar top narrower than the nut"
 assert PI_FOOT_H > PI_GPIO_H + 0.5, "pillar top would hit the GPIO header"
@@ -432,17 +430,19 @@ with BuildPart() as box_builder:
         with Locations(_wall_cut(ang, VENT_Z0 + VENT_H / 2, VENT_W, VENT_H)):
             Box(WALL + 2, VENT_W, VENT_H, mode=Mode.SUBTRACT)
 
-    # Power cable: floor hole for the switch box, slot from it to the outside
+    # Power cable: floor hole for the switch box, notch in the wall foot for the cable
     with Locations(Pos(0, SWITCH_HOLE_Y, FLOOR / 2)):
         Box(SWITCH_HOLE, SWITCH_HOLE, FLOOR + 2, mode=Mode.SUBTRACT)
-    with Locations(Pos(0, SWITCH_HOLE_Y, -1)):
-        Box(
-            POWER_NOTCH_W,
-            R_OUT + 1 + SWITCH_HOLE_Y,
-            FLOOR + 1,
-            align=(Align.CENTER, Align.MAX, Align.MIN),
-            mode=Mode.SUBTRACT,
+    # (cut from the inner wall face outward so the floor edge stays whole)
+    _notch_r = R_IN + (WALL + 1) / 2
+    _notch_a = radians(POWER_ANGLE)
+    with Locations(
+        Location(
+            (_notch_r * cos(_notch_a), _notch_r * sin(_notch_a), (POWER_NOTCH_H - 1) / 2),
+            (0, 0, POWER_ANGLE),
         )
+    ):
+        Box(WALL + 1, POWER_NOTCH_W, POWER_NOTCH_H + 1, mode=Mode.SUBTRACT)
 
 box_part = box_builder.part
 
@@ -498,7 +498,7 @@ lid_part = lid_builder.part
 # Floor hole cover (print orientation: flange on the bed, plug up)
 # ---------------------------------------------------------------------------
 COVER_PLUG = SWITCH_HOLE - 2 * COVER_CLEARANCE
-COVER_PLUG_H = FLOOR - COVER_RECESS
+COVER_PLUG_H = FLOOR  # flush with the underside
 with BuildPart() as cover_builder:
     flange = SWITCH_HOLE + 2 * COVER_FLANGE_W
     Box(flange, flange, COVER_FLANGE_T, align=(Align.CENTER, Align.CENTER, Align.MIN))
@@ -653,9 +653,9 @@ usbc_plug = _span_box(
 POWER_CABLE_PATH = [
     (USBC_ARM_X[0], USBC_CABLE_Y, USBC_Z),
     (USBC_ARM_X[0] - 8.0, USBC_CABLE_Y - 8.0, USBC_Z - 8.0),
-    (0.0, -R_IN + CABLE_RISE_GAP / 2, FLOOR + 6.0),
-    (0.0, -R_IN + CABLE_RISE_GAP / 2, POWER_CABLE_Z),
-    (0.0, -R_OUT - 20.0, POWER_CABLE_Z),
+    (0.0, -R_IN + 4.0, FLOOR + POWER_CABLE_T / 2),
+    (0.0, -R_OUT - 2.0, POWER_CABLE_T / 2),
+    (0.0, -R_OUT - 20.0, POWER_CABLE_T / 2),
 ]
 power_cable = _cable(POWER_CABLE_PATH, POWER_CABLE_T / 2)
 
@@ -789,14 +789,6 @@ with BuildPart() as power_plate_builder:
     plate = SWITCH_HOLE + 2 * TEST_POWER_MARGIN
     Box(plate, plate, FLOOR, align=(Align.CENTER, Align.CENTER, Align.MIN))
     Box(SWITCH_HOLE, SWITCH_HOLE, FLOOR * 3, mode=Mode.SUBTRACT)
-    with Locations(Pos(0, 0, -1)):
-        Box(
-            POWER_NOTCH_W,
-            plate,
-            FLOOR + 2,
-            align=(Align.CENTER, Align.MAX, Align.MIN),
-            mode=Mode.SUBTRACT,
-        )
 test_power_plate = power_plate_builder.part
 
 # Pillar jig: the real pillars at the real pitch on a thin plate
@@ -859,7 +851,8 @@ if __name__ == "__main__":
     tests = [test_collar, test_cup, test_box, test_lid, test_jig, test_power_plate]
     print(f"  fit tests:  {', '.join(f'{t.volume / 1000:.0f} cm3' for t in tests)} solid")
     hole = f"{SWITCH_HOLE:.1f} sq at y={SWITCH_HOLE_Y:.1f}"
-    print(f"  power:      floor hole {hole}, slot {POWER_NOTCH_W:.1f} x {FLOOR:.1f} to the back")
+    notch = f"{POWER_NOTCH_W:.1f} x {POWER_NOTCH_H:.1f} at {POWER_ANGLE:.0f} deg"
+    print(f"  power:      floor hole {hole}, wall notch {notch}")
 
     if show is not None:
         try:
