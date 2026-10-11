@@ -15,10 +15,13 @@ Three printed parts, no fasteners:
              the bin. The pocket is OPEN AT THE BOTTOM: the controller goes in
              from below with every cord still attached, nothing is threaded
              through anything.
-    plate  — the pocket's floor: slides into grooves in the pocket's long
-             walls from the +X end, under the controller and under its cables,
-             and clicks home. It closes the pocket so stuffed cord cannot get
-             under the controller, and carries the button load.
+    plate  — the pocket's floor, as PLATE_PIECES short tiles: each is dropped
+             into the well between the pocket's +X end and the skirt, slid into
+             grooves in the pocket's long walls under the controller and under
+             its cables, and pushed along by the next; the last one clicks
+             home. The floor closes the pocket so stuffed cord cannot get under
+             the controller, and carries the button load. (A one-piece floor
+             had no room to start its slide inside the full-height skirt.)
 
 Why the controller loads from below (Ver.0.2 → 0.3)
 ---------------------------------------------------
@@ -97,6 +100,7 @@ Print notes
 - PETG, 0.2 mm layers, 3 walls.
 """
 
+from functools import reduce
 from math import pi
 from pathlib import Path
 
@@ -215,6 +219,11 @@ BUMP_RADIUS = 0.8  # [D] detent bump, a cylinder lying across the groove ceiling
 BUMP_PROUD = 0.4  # [D] how far the bump hangs into the groove
 BUMP_FROM_END = 2.5  # [D] bump centre from the pocket's +X outer face
 SCALLOP_RADIUS = 1.3  # [D] matching cut in each plate edge
+PLATE_PIECES = (
+    4  # [D] the floor is this many tiles; each must lie flat in the well beside the pocket
+)
+PIECE_GAP = 0.2  # [D] between tiles when home
+WELL_FINGER_MARGIN = 3.0  # [D] well length left beyond a tile for a fingertip while loading
 
 # --- Finish ---
 PETG_DENSITY = 1.27  # g/cm3
@@ -266,7 +275,11 @@ Z_HOLE_TOP = Z_FLOOR_TOP + HOLE_HEIGHT
 GROOVE_X0 = -POCKET_OUTER_L / 2 + GROOVE_STOP  # blind end
 PLATE_X0 = GROOVE_X0 + PLATE_END_CLEARANCE
 PLATE_X1 = POCKET_OUTER_L / 2 + PLATE_PULL
-PLATE_LENGTH = PLATE_X1 - PLATE_X0
+PLATE_LENGTH = PLATE_X1 - PLATE_X0  # the whole floor, tab included
+PLATE_RUN = POCKET_OUTER_L / 2 - PLATE_X0  # tiled by the pieces, tab excluded
+PIECE_LENGTH = (PLATE_RUN - (PLATE_PIECES - 1) * PIECE_GAP) / PLATE_PIECES
+PIECE_X0 = [PLATE_X0 + k * (PIECE_LENGTH + PIECE_GAP) for k in range(PLATE_PIECES)]
+INSERT_WELL = CAP_INNER_L / 2 - POCKET_OUTER_L / 2  # pocket +X face to the skirt's inner face
 PLATE_WIDTH = POCKET_W + 2 * (GROOVE_DEPTH - PLATE_CLEARANCE)
 BUMP_X = POCKET_OUTER_L / 2 - BUMP_FROM_END
 Y_GROOVE_FACE = POCKET_W / 2  # inner face of each long wall
@@ -324,7 +337,15 @@ assert GROOVE_DEPTH + 1.0 <= POCKET_WALL_THICKNESS, "groove leaves too little wa
 assert BUMP_PROUD < PLATE_CLEARANCE * 2.5, "bump too tall for the plate edge to flex over"
 assert BUMP_RADIUS > BUMP_PROUD, "bump must be a shallow segment to ramp over"
 assert SCALLOP_RADIUS >= BUMP_RADIUS + 0.4, "scallop too small for the bump"
-assert BUMP_X - SCALLOP_RADIUS > PLATE_X0 + 5.0, "scallop too close to the plate's leading end"
+assert PLATE_PIECES >= 3, "need at least three pieces: home, in the well, in the hand"
+assert BUMP_X - SCALLOP_RADIUS > PIECE_X0[-1] + 3.0, (
+    "scallop too close to the end piece's lead edge"
+)
+assert PIECE_LENGTH + PLATE_PULL + WELL_FINGER_MARGIN <= INSERT_WELL, (
+    f"a floor piece ({PIECE_LENGTH + PLATE_PULL:.1f} mm + finger) does not fit the "
+    f"{INSERT_WELL:.1f} mm well between pocket and skirt"
+)
+assert PIECE_LENGTH >= 15.0, "floor pieces too short to stay flat in the grooves"
 assert Z_CABLE - CABLE_BOOT_DIAMETER / 2 - Z_SEAT >= 3.0, "plate too close to the boots"
 assert Z_SLOT_TOP >= Z_CABLE + CABLE_BOOT_DIAMETER / 2 + 1.0, "pocket notch too low for the boot"
 assert Z_POCKET_BOTTOM - Z_FLOOR_TOP >= 3 * CABLE_DIAMETER, "no cord space under the pocket"
@@ -470,28 +491,26 @@ def build_cap_body() -> Part:
     return c.part
 
 
-def build_plate() -> Part:
+def build_plate_piece(k: int) -> Part:
+    """Tile k of the pocket floor, 0 at the blind end. The last carries the tab and scallops."""
+    last = k == PLATE_PIECES - 1
+    length = PIECE_LENGTH + (PLATE_PULL if last else 0.0)
     with BuildPart() as p:
-        with Locations((PLATE_X0, 0, Z_PLATE_BOTTOM)):
-            Box(
-                PLATE_LENGTH,
-                PLATE_WIDTH,
-                PLATE_THICKNESS,
-                align=(Align.MIN, Align.CENTER, Align.MIN),
-            )
+        with Locations((PIECE_X0[k], 0, Z_PLATE_BOTTOM)):
+            Box(length, PLATE_WIDTH, PLATE_THICKNESS, align=(Align.MIN, Align.CENTER, Align.MIN))
         lead = p.edges().filter_by(Axis.Y).group_by(Axis.X)[0]
         chamfer(lead, length=PLATE_LEAD_CHAMFER)
-        # Scallops for the detent bumps, one in each edge.
-        with Locations(
-            (BUMP_X, -PLATE_WIDTH / 2, Z_PLATE_BOTTOM - 1),
-            (BUMP_X, PLATE_WIDTH / 2, Z_PLATE_BOTTOM - 1),
-        ):
-            Cylinder(
-                SCALLOP_RADIUS,
-                PLATE_THICKNESS + 2.0,
-                align=(Align.CENTER, Align.CENTER, Align.MIN),
-                mode=Mode.SUBTRACT,
-            )
+        if last:  # scallops for the detent bumps, one in each edge
+            with Locations(
+                (BUMP_X, -PLATE_WIDTH / 2, Z_PLATE_BOTTOM - 1),
+                (BUMP_X, PLATE_WIDTH / 2, Z_PLATE_BOTTOM - 1),
+            ):
+                Cylinder(
+                    SCALLOP_RADIUS,
+                    PLATE_THICKNESS + 2.0,
+                    align=(Align.CENTER, Align.CENTER, Align.MIN),
+                    mode=Mode.SUBTRACT,
+                )
     return p.part
 
 
@@ -606,11 +625,12 @@ bin_part = build_bin()
 cap_body = build_cap_body()
 bumps = build_bumps()
 cap = cap_body + bumps
-plate = build_plate()
+pieces: dict[str, Part] = {f"plate-{k + 1}": build_plate_piece(k) for k in range(PLATE_PIECES)}
+plate = reduce(lambda a, b: a + b, pieces.values())  # the whole floor, for the checks
 controller = build_controller_stand_in()
 cords = build_cord_stand_ins()
 
-printed: dict[str, Part] = {"bin": bin_part, "cap": cap, "plate": plate}
+printed: dict[str, Part] = {"bin": bin_part, "cap": cap, **pieces}
 stand_ins: dict[str, Part] = {"controller": controller, **cords}
 everything = {**printed, **stand_ins}
 
@@ -664,27 +684,30 @@ assert not interferences, f"parts interfere: {interferences}"
 
 # Cap (with plate and controller) lifts straight off the bin.
 _up = Location((0, 0, 30))
-for name in ("cap", "plate", "controller"):
+for name in ("cap", *pieces, "controller"):
     assert overlap_volume(everything[name].moved(_up), bin_part) < 0.01, f"{name} cannot lift off"
 
-# Plate mechanics: slides in and out along +X past the bumps' absence, stops at the blind end,
-# is captured vertically by the grooves, and the bumps hold it home.
-_plate_out = plate.moved(Location((25, 0, 0)))  # tab reaches the bin wall, not the skirt
-_v_out = overlap_volume(_plate_out, cap_body)
-assert _v_out < 0.01, f"plate does not slide out of the +X end ({_v_out:.3f} mm3)"
-_plate_mid = plate.moved(Location((20, 0, 0)))
-_v_mid = overlap_volume(_plate_mid, cap_body)
-assert _v_mid < 0.01, f"plate binds part way along the grooves ({_v_mid:.3f} mm3)"
-assert overlap_volume(plate.moved(Location((-1.0, 0, 0))), cap_body) > 0.01, (
+# Plate mechanics. Every piece must first lie flat in the well between the pocket's +X face and
+# the skirt (the step Ver.0.3 forgot: a one-piece floor never had room to start), then slide
+# into the grooves, stop at the blind end, be held top and bottom, and click home.
+first, last = pieces["plate-1"], pieces[f"plate-{PLATE_PIECES}"]
+for name, piece in pieces.items():
+    dx = POCKET_OUTER_L / 2 + 0.5 - piece.bounding_box().min.X
+    _v = overlap_volume(piece.moved(Location((dx, 0, 0))), cap_body)
+    assert _v < 0.01, f"{name} does not lie flat in the loading well ({_v:.3f} mm3)"
+_over_bump = first.moved(Location((BUMP_X - PIECE_LENGTH / 2 - PIECE_X0[0], 0, 0)))
+_v_mid = overlap_volume(_over_bump, cap_body)
+assert _v_mid < 0.01, f"a piece binds part way along the grooves ({_v_mid:.3f} mm3)"
+assert overlap_volume(first.moved(Location((-1.0, 0, 0))), cap_body) > 0.01, (
     "no stop at the blind end"
 )
-assert overlap_volume(plate.moved(Location((0, 0, 0.5))), cap_body) > 0.01, "plate not held down"
-assert overlap_volume(plate.moved(Location((0, 0, -0.6))), cap_body) > 0.01, "plate not held up"
-assert overlap_volume(plate, bumps) < 0.01, "bumps do not sit in the scallops when home"
-assert overlap_volume(plate.moved(Location((1.5, 0, 0))), bumps) > 0.01, (
-    "bumps do not stop the plate"
+assert overlap_volume(first.moved(Location((0, 0, 0.5))), cap_body) > 0.01, "plate not held down"
+assert overlap_volume(first.moved(Location((0, 0, -0.6))), cap_body) > 0.01, "plate not held up"
+assert overlap_volume(last, bumps) < 0.01, "bumps do not sit in the scallops when home"
+assert overlap_volume(last.moved(Location((1.5, 0, 0))), bumps) > 0.01, (
+    "bumps do not stop the end piece"
 )
-assert overlap_volume(_plate_mid, bumps) > 0.01, "bumps do not ride on the plate edge while sliding"
+assert overlap_volume(_over_bump, bumps) > 0.01, "bumps do not ride on a plate edge while sliding"
 # Sliding over a bump must only need the edge strip to flex within the groove's spare height.
 assert BUMP_PROUD - PLATE_CLEARANCE / 2 <= PLATE_CLEARANCE * 1.5, (
     "bump needs more flex than the groove allows"
@@ -757,10 +780,13 @@ for name, part in printed.items():
 # ===========================================================================
 # Test pieces
 # ===========================================================================
-# 1. The pocket with a margin of skin round it, window included; print it with the plate.
-#    Load the controller from below, slide the plate in: fit, click, button strip in the window.
-_crop_xy = (PLATE_X1 + 4.0, POCKET_OUTER_W / 2 + 6.0)
-test_pocket = cap & slab(-_crop_xy[0], _crop_xy[0], -_crop_xy[1], _crop_xy[1], -1, Z_TOP + 1)
+# 1. The pocket with a margin of skin round it, window included, plus the +X skirt end so the
+#    loading well is the real one; print it with the plate pieces. Load the controller from
+#    below, drop each piece into the well and slide it in: fit, click, button strip in the window.
+_crop_y = POCKET_OUTER_W / 2 + 6.0
+test_pocket = cap & slab(
+    -(POCKET_OUTER_L / 2 + 6.0), CAP_L / 2 + 1.0, -_crop_y, _crop_y, -1, Z_TOP + 1
+)
 # 2+3. One end of bin and cap, 17 mm tall, pins included: the sliding fit of the cap, the
 #      cord hole formed by slit + notch, and the weave. Align the two top edges.
 _end_crop = slab(
@@ -782,7 +808,9 @@ for stale in (
     "lid.step",
     "tray.stl",
     "tray.step",
-    "test-pocket.stl",
+    "plate.stl",
+    "plate.step",
+    "drawings/part-plate.svg",
     "test-well.stl",
     "test-window.stl",
     "test-end-body.stl",
@@ -803,7 +831,8 @@ def print_oriented(part: Part, flip: bool = False) -> Part:
 exports = {
     "bin": (bin_part, False),
     "cap": (cap, True),
-    "plate": (plate, False),
+    "plate-mid": (pieces["plate-1"], False),
+    "plate-end": (pieces[f"plate-{PLATE_PIECES}"], False),
     "test-pocket": (test_pocket, True),
     "test-end-bin": (test_end_bin, False),
     "test-end-cap": (test_end_cap, False),
@@ -820,7 +849,7 @@ for name, (part, flip) in exports.items():
 colors = {
     "bin": Color(0.25, 0.25, 0.25),
     "cap": Color(0.15, 0.15, 0.15),
-    "plate": Color(0.45, 0.45, 0.45),
+    **{name: Color(0.45, 0.45, 0.45) for name in pieces},
     "controller": Color(0.9, 0.9, 0.9),
     "cord-weave": Color(0.1, 0.3, 0.8),
     "cord-drops": Color(0.1, 0.3, 0.8),
@@ -911,10 +940,13 @@ write_view(
 # The cord exit, from outside: hole = notch ∩ slit.
 _end_detail = slab(BIN_LENGTH / 2 - 5.0, 300, LANE_Y - 12, LANE_Y + 12, -1, 20)
 write_view("detail-exit.svg", clipped([bin_part, cap], _end_detail), origin=(1000, 0, 0), scale=5.0)
-# Exploded isometric: cap up, controller below it, plate slid out to +X and lowered.
+# Exploded isometric: cap up, controller below it, floor pieces slid out to +X and lowered.
 exploded = []
 for name, part in everything.items():
-    dx, dz = {"cap": (0, 110.0), "controller": (0, 70.0), "plate": (60.0, 45.0)}.get(name, (0, 0))
+    if name in pieces:
+        dx, dz = 60.0, 45.0
+    else:
+        dx, dz = {"cap": (0, 110.0), "controller": (0, 70.0)}.get(name, (0, 0))
     exploded.append(part.moved(Location((dx, 0, dz))))
 write_view("exploded-iso.svg", exploded, origin=(900, -900, 700))
 write_view("assembled-iso.svg", as_used, origin=(900, -900, 700))
@@ -926,7 +958,15 @@ def flipped(part: Part) -> Part:
     return part.rotate(Axis.X, 180).moved(Location((0, 0, Z_TOP)))
 
 
-_loading = [flipped(cap), flipped(controller), flipped(plate.moved(Location((50.0, 0, 0))))]
+# Pieces: all but the last two home, the next lying in the well, the last still in the hand.
+_loading = [flipped(cap), flipped(controller)]
+for k, piece in enumerate(pieces.values()):
+    if k < PLATE_PIECES - 2:
+        _loading.append(flipped(piece))
+    else:
+        dx = POCKET_OUTER_L / 2 + 1.0 - PIECE_X0[k]
+        dz = 0.0 if k == PLATE_PIECES - 2 else -25.0
+        _loading.append(flipped(piece.moved(Location((dx, 0, dz)))))
 write_view("loading-iso.svg", _loading, origin=(900, -900, 700))
 for name, (part, flip) in exports.items():
     if not name.startswith("test"):
@@ -934,10 +974,11 @@ for name, (part, flip) in exports.items():
 write_view(
     "test-pieces.svg",
     [
-        print_oriented(test_pocket, True).moved(Location((0, 50, 0))),
-        print_oriented(plate).moved(Location((0, -5, 0))),
-        print_oriented(test_end_bin).moved(Location((-40, -65, 0))),
-        print_oriented(test_end_cap).moved(Location((40, -65, 0))),
+        print_oriented(test_pocket, True).moved(Location((0, 55, 0))),
+        print_oriented(pieces["plate-1"]).moved(Location((-30, -5, 0))),
+        print_oriented(pieces[f"plate-{PLATE_PIECES}"]).moved(Location((30, -5, 0))),
+        print_oriented(test_end_bin).moved(Location((-40, -70, 0))),
+        print_oriented(test_end_cap).moved(Location((40, -70, 0))),
     ],
     origin=(700, -900, 800),
 )
@@ -970,9 +1011,12 @@ print(
     f"open at the bottom to z={Z_SLOT_TOP:.1f}"
 )
 print(
-    f"  plate:          {PLATE_LENGTH:.1f} x {PLATE_WIDTH:.1f} x {PLATE_THICKNESS:.1f}, "
-    f"grooves {GROOVE_DEPTH:.1f} deep x {Z_GROOVE_TOP - Z_GROOVE_BOTTOM:.1f} high, "
-    f"bumps Ø{2 * BUMP_RADIUS:.1f} proud {BUMP_PROUD:.1f} at x={BUMP_X:.1f}, tab {PLATE_PULL:.0f}"
+    f"  floor:          {PLATE_PIECES} pieces x {PIECE_LENGTH:.1f} (+{PLATE_PULL:.0f} tab on the "
+    f"last) x {PLATE_WIDTH:.1f} x {PLATE_THICKNESS:.1f}; loading well {INSERT_WELL:.1f} long"
+)
+print(
+    f"  grooves:        {GROOVE_DEPTH:.1f} deep x {Z_GROOVE_TOP - Z_GROOVE_BOTTOM:.1f} high, "
+    f"bumps Ø{2 * BUMP_RADIUS:.1f} proud {BUMP_PROUD:.1f} at x={BUMP_X:.1f}"
 )
 print(
     f"  cord exit:      {SLIT_WIDTH:.1f} wide x {HOLE_HEIGHT:.1f} high at "
@@ -990,11 +1034,14 @@ print(
     f"  cord volume:    solid {CORD_SOLID_MM3 / 1000:.1f} cm3 in {FREE_MM3 / 1000:.0f} cm3 free "
     f"-> {100 * FILL_FRACTION:.1f} % fill (limit {100 * PACKING_FRACTION:.0f} %)"
 )
-for name in printed:
+for name, (part, _flip) in exports.items():
+    if name.startswith("test"):
+        continue
     sx, sy, sz = sizes[name]
+    count = f" x{PLATE_PIECES - 1}" if name == "plate-mid" else ""
     print(
-        f"  {name:<14}  {sx:.1f} x {sy:.1f} x {sz:.1f} mm, "
-        f"{printed[name].volume / 1000:.1f} cm3, ~{grams(printed[name]):.0f} g"
+        f"  {name + count:<14}  {sx:.1f} x {sy:.1f} x {sz:.1f} mm, "
+        f"{part.volume / 1000:.1f} cm3, ~{grams(part):.0f} g each"
     )
 for name in exports:
     if name.startswith("test"):
