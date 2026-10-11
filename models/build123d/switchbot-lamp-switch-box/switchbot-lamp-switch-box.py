@@ -12,7 +12,10 @@ Three printed parts, no fasteners:
             exiting cord weaves through.
     tray  — a plate that rests on the bin rim, with a closed-bottom well for
             the controller hanging from it into the bin. The well's end walls
-            are notched from the top for the cables.
+            are notched from the top for the cables, and the notches are big
+            enough (CONNECTOR_PASS square under the plate) for the barrel
+            plugs: the cords are fixed to the controller, so the only way a
+            cord reaches the bin is plug-first through its notch.
     cap   — top skin with the button window and a skirt that reaches down the
             outside of the bin almost to the floor.
 
@@ -144,9 +147,7 @@ CONTROLLER_CABLE_EXIT_HEIGHT = CONTROLLER_HEIGHT / 2  # [M] cables leave at mid-
 CABLE_BOOT_DIAMETER = 6.0  # [M] strain-relief boot where each cable leaves the controller
 CABLE_BOOT_LENGTH = 5.0  # [M]
 CABLE_PAIR_PITCH = 8.0  # [M] centre distance of the two cables on the -X end
-CABLE_SLOT_MARGIN = 1.5  # [D] per side, well notch wider than the boots
-CABLE_SLOT_WIDTH_LEFT = CABLE_PAIR_PITCH + CABLE_BOOT_DIAMETER + 2 * CABLE_SLOT_MARGIN  # two cables
-CABLE_SLOT_WIDTH_RIGHT = CABLE_BOOT_DIAMETER + 2 * CABLE_SLOT_MARGIN  # one cable
+CABLE_SLOT_MARGIN = 3.0  # [D] per side, well notch wider than the boots (widths derived below)
 CABLE_SLOT_OFFSET_LEFT = 0.0  # [A] notch centre offset along Y from the controller centreline
 CABLE_SLOT_OFFSET_RIGHT = 0.0  # [A]
 
@@ -189,6 +190,7 @@ PLATE_EDGE_INSET = 0.1  # [D] per side, plate edge inside the bin's outer face
 CONTROLLER_CLEARANCE = 0.5  # [D] per side, controller in the well (checked on Ver.0.2 base case)
 FACE_CLEARANCE = 0.5  # [D] controller face to skin underside — must clear BUTTON_AREA_PROUD
 NOTCH_BOTTOM_MARGIN = 1.5  # [D] well notch bottom below the boot
+NOTCH_PASS_CLEARANCE = 1.5  # [D] per side: a barrel plug must fit through each notch into the bin
 
 # --- Cap (mm) ---
 SKIN_THICKNESS = 2.0  # [D] cap top
@@ -220,6 +222,14 @@ WELL_OUTER_L = WELL_INNER_L + 2 * WELL_WALL_THICKNESS
 WELL_OUTER_W = WELL_INNER_W + 2 * WELL_WALL_THICKNESS
 WELL_OUTER_R = WELL_INNER_R + WELL_WALL_THICKNESS
 
+# Well notches. The cords are fixed to the controller, so every cord reaches the bin by being
+# threaded plug-first through its notch: each notch must pass a barrel plug, not just the boots.
+CONNECTOR_PASS = CONNECTOR_DIAMETER + 2 * NOTCH_PASS_CLEARANCE
+CABLE_SLOT_WIDTH_LEFT = max(
+    CABLE_PAIR_PITCH + CABLE_BOOT_DIAMETER + 2 * CABLE_SLOT_MARGIN, CONNECTOR_PASS
+)  # two cables
+CABLE_SLOT_WIDTH_RIGHT = max(CABLE_BOOT_DIAMETER + 2 * CABLE_SLOT_MARGIN, CONNECTOR_PASS)  # one
+
 # Bin, tray, cap outlines
 BIN_OUTER_L = BIN_LENGTH + 2 * WALL_THICKNESS
 BIN_OUTER_W = BIN_WIDTH + 2 * WALL_THICKNESS
@@ -246,7 +256,10 @@ Z_FACE = Z_PLATE_TOP - FACE_CLEARANCE
 Z_SEAT = Z_FACE - CONTROLLER_HEIGHT
 Z_WELL_BOTTOM = Z_SEAT - WELL_FLOOR_THICKNESS
 Z_CABLE = Z_SEAT + CONTROLLER_CABLE_EXIT_HEIGHT
-Z_NOTCH_BOTTOM = Z_CABLE - CABLE_BOOT_DIAMETER / 2 - NOTCH_BOTTOM_MARGIN
+Z_NOTCH_BOTTOM = min(
+    Z_CABLE - CABLE_BOOT_DIAMETER / 2 - NOTCH_BOTTOM_MARGIN,  # clears the boot
+    Z_RIM - CONNECTOR_PASS,  # a plug passes under the plate
+)
 Z_LIP_BOTTOM = Z_RIM - LIP_HEIGHT
 Z_SKIRT_BOTTOM = GROUND_CLEARANCE
 Z_HOLE_TOP = Z_FLOOR_TOP + HOLE_HEIGHT
@@ -316,6 +329,16 @@ assert LANE_Y + WEAVE_Y + CABLE_DIAMETER / 2 + 1.0 <= PLUG_Y - CONNECTOR_DIAMETE
     "cord lane runs into the stowed plug"
 )
 assert Z_NOTCH_BOTTOM > Z_SEAT, "well notch cuts into the floor"
+assert Z_RIM - Z_NOTCH_BOTTOM >= CONNECTOR_PASS, "a plug cannot pass under the plate at the notch"
+assert min(CABLE_SLOT_WIDTH_LEFT, CABLE_SLOT_WIDTH_RIGHT) >= CONNECTOR_PASS, (
+    "notch too narrow for a plug"
+)
+assert max(CABLE_SLOT_WIDTH_LEFT, CABLE_SLOT_WIDTH_RIGHT) <= WELL_OUTER_W - 2 * 8.0, (
+    "notch leaves too little end wall to locate the controller"
+)
+assert CONNECTOR_DIAMETER + 1.0 <= Z_PLATE_TOP - Z_SEAT, (
+    "a plug cannot lie in the well to be threaded"
+)
 assert Z_HOLE_TOP + 1.0 < Z_WELL_BOTTOM, "cord exit hole reaches the well"
 assert SLIT_WIDTH < CONNECTOR_DIAMETER, "a plug could slip out through the slit"
 assert PLUG_X - CONNECTOR_DIAMETER / 2 > X_DROP + CABLE_DIAMETER / 2 + 0.5 or (
@@ -850,7 +873,12 @@ print(
 )
 print(
     f"  well:           {WELL_INNER_L:.1f} x {WELL_INNER_W:.1f}, floor {WELL_FLOOR_THICKNESS:.0f} "
-    f"(bridge {WELL_INNER_W:.1f} mm), notches down to z={Z_NOTCH_BOTTOM:.2f}"
+    f"(bridge {WELL_INNER_W:.1f} mm)"
+)
+print(
+    f"  notches:        left {CABLE_SLOT_WIDTH_LEFT:.0f} / right {CABLE_SLOT_WIDTH_RIGHT:.0f} wide,"
+    f" z={Z_NOTCH_BOTTOM:.1f}..{Z_PLATE_TOP:.1f} ({Z_RIM - Z_NOTCH_BOTTOM:.0f} mm under the plate; "
+    f"plug pass {CONNECTOR_PASS:.0f} mm)"
 )
 print(
     f"  cord exit:      {SLIT_WIDTH:.1f} wide x {HOLE_HEIGHT:.1f} high at "
