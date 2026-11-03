@@ -1,8 +1,9 @@
 """Stand for the Eufy HomeVac H11 (T2521), inlet down, attachment fitted.
 
 The vacuum stands about 470 mm tall on a 130 mm nozzle and most of its mass is high
-up, so the stand has two jobs: grip the body firmly and keep the centre of gravity
-low. Three printed parts plus ballast.
+up, so the stand has two jobs: grip the body firmly and resist tipping. Four printed
+parts, no ballast: a tube, a collar on top of it, and two halves of a hollow cone
+glued around its foot.
 
 How it holds
 ------------
@@ -11,34 +12,46 @@ That step lands on a flat seat in the collar, and a sleeve wraps the barrel abov
 it. Everything measured here was taken from the real vacuum, because an earlier
 version that gripped the tapered dust cup from photo estimates did not fit at all.
 
-Holding the barrel puts the top of the stand above the printer's Z, so the tube
-splits into a base and a collar joined by a slip spigot.
+Holding the barrel puts the top of the stand above the printer's Z, so the tube and
+collar are separate, joined by a slip spigot.
 
-Ballast
--------
-The base is a dish around the tube. Fill it from the top, then close it with the
-lid. Sand gives about 650 g, steel shot about 1.9 kg. Fasten the lid with tape or
-glue, or the ballast comes out if the stand ever falls over.
+Staying upright
+---------------
+Width does the work, not mass: force to tip at the top of the vacuum is total mass x
+base radius / height. A hollow cone reaches Phi 200 for far less plastic than a solid
+dish of the same stiffness. Phi 200 is wider than the bed, hence the two halves, which
+fit when turned 45 degrees (the STL is exported that way).
 
-Fit checks (print joint-test.stl and collar.stl first)
-------------------------------------------------------
-Collar on the vacuum, attachment fitted:
-- The attachment must pass through the collar.
-- The barrel must seat on the step without rocking, and lift out freely.
-- The attachment tip should stick out TIP_BELOW_COLLAR mm below the collar. Each mm
-  over TIP_BELOW_COLLAR + TIP_CLEARANCE means the tip hits the base floor.
-joint-test.stl into the collar: must slide in by hand and sit on its shoulder.
+The halves clamp a V bead on the tube. Without it the tube would lift straight out of
+the cone and the wide footprint would do nothing. The tube's own floor also rests on
+the table. Bending at the tube root is about 0.07 MPa static, so strength is not what
+sizes any of this.
+
+Assembly
+--------
+Stand the tube on a flat table, close both halves around it with the bead in the
+groove, and glue the two flat seams. The table sets the height and the tube aligns the
+halves. Keep glue off the tube.
+
+Fit checks (print these before the long parts)
+----------------------------------------------
+neck-test-tube.stl and neck-test-half.stl are a slice through the bead and groove. The
+half must sit on the ring with the bead in the groove, without forcing.
+
+The collar and joint-test.stl were already confirmed against the real vacuum.
 
 Print notes
 -----------
-- base: upright, dish on the plate. No supports. Tall and narrow, so check the first
-  layer and slow down near the top.
-- collar: upright, wide end on the plate. No supports; the bore narrows through a
-  45 degree cone above the socket.
-- lid: flat, either face down.
+- tube: upright, floor on the plate, with a brim. No supports. Tall and narrow on a
+  moving bed, so slow down near the top.
+- cone-half (print twice): upright, foot on the plate. No supports; the inside is under
+  45 degrees. Leave it where the STL puts it or it will not fit the plate. Set 6 walls
+  so the 2.4 mm shell comes out solid.
+- collar: upright, wide end on the plate. No supports; the bore narrows through a 45
+  degree cone above the socket.
 """
 
-from math import pi
+from math import atan2, cos, sqrt
 from pathlib import Path
 
 from build123d import (
@@ -53,6 +66,7 @@ from build123d import (
     Plane,
     Polyline,
     Pos,
+    Rot,
     add,
     export_stl,
     make_face,
@@ -75,31 +89,36 @@ STEP_TO_EXHAUST = 61.0  # purple line to the lower edge of the exhaust, the slee
 SLEEVE_CLEARANCE = 0.5  # per side, barrel to sleeve — confirmed on the printed collar
 DUST_CUP_CLEARANCE = 1.0  # per side, dust cup to seat bore — confirmed on the printed collar
 JOINT_CLEARANCE = 0.25  # per side, spigot to socket — confirmed with joint-test.stl
-LID_CLEARANCE = 0.25  # per side, lid to dish and tube
-TIP_CLEARANCE = 4.0  # attachment tip to base floor
+NECK_CLEARANCE = 0.2  # per side, tube to cone neck and bead to groove
+TIP_CLEARANCE = 4.0  # attachment tip to tube floor
 
 # --- Tube and collar (mm) ---
-TUBE_DIAMETER = 72.0  # outside of the base tube and the collar, flush at the joint
-CHAMBER_DIAMETER = 64.0  # bore of the base tube, clears the dust cup and attachment
+TUBE_DIAMETER = 72.0  # outside of the tube and the collar, flush at the joint
+CHAMBER_DIAMETER = 64.0  # bore of the tube, clears the dust cup and attachment
 SLEEVE_HEIGHT = 30.0  # how far the sleeve climbs the barrel, well below the exhaust
-FLOOR_THICKNESS = 3.0  # base floor, carries the ballast
-JOINT_Z = 160.0  # where the collar meets the base
-SPIGOT_DIAMETER = 68.0  # outside of the base spigot, 2 mm wall
+FLOOR_THICKNESS = 3.0  # tube floor
+JOINT_Z = 160.0  # where the collar meets the tube
+SPIGOT_DIAMETER = 68.0  # outside of the tube spigot, 2 mm wall
 SPIGOT_LENGTH = 15.0  # engagement into the collar
 SOCKET_TOP_GAP = 0.4  # spigot end to socket roof, so the collar rests on the shoulder
 RIM_CHAMFER = 1.0  # collar top, outside and lead-in
+FOOT_CHAMFER = 0.6  # bottom edges, offsets elephant's foot
 
-# --- Dish (mm) ---
-DISH_DIAMETER = 160.0  # footprint — sets the tip-over angle
-DISH_HEIGHT = 35.0  # overall, lid included
-DISH_WALL = 2.4  # 6 perimeters at 0.4 mm nozzle, holds back the ballast
-DISH_RIM_WALL = 1.2  # outer wall around the lid
-DISH_CHAMFER = 0.6  # bottom edge, offsets elephant's foot
-LID_THICKNESS = 3.0  # lid sits flush with the dish rim
-TUBE_LEDGE = 1.5  # ledge on the tube that carries the lid's inner edge
+# --- Cone (mm) ---
+CONE_DIAMETER = 200.0  # footprint — sets the tip-over force, about 220 gf
+CONE_WALL = 2.4  # shell thickness, 6 perimeters at 0.4 mm nozzle
+CONE_FOOT_HEIGHT = 4.0  # vertical band at the foot, stiffens the edge
+CONE_TOP_Z = 64.0  # where the shell reaches the neck — keeps the slope under 45 degrees
+NECK_DIAMETER = 84.0  # outside of the neck that clamps the tube
+NECK_TOP_Z = 89.0  # top of the neck
 
-# --- Joint test (mm) ---
-JOINT_TEST_BELOW = 5.0  # base tube kept below the shoulder, enough to hold on to
+# --- Bead that keeps the tube in the cone (mm) ---
+BEAD_Z = 76.0  # bead centre, mid-neck
+BEAD_DEPTH = 2.5  # how far the bead stands off the tube; 45 degree flanks print unsupported
+
+# --- Test pieces (mm) ---
+JOINT_TEST_BELOW = 5.0  # tube kept below the shoulder, enough to hold on to
+NECK_TEST_HALF_HEIGHT = 8.0  # slice this far either side of the bead
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 
@@ -108,8 +127,8 @@ OUTPUT_DIR = Path(__file__).parent / "output"
 TIP_Z = FLOOR_THICKNESS + TIP_CLEARANCE
 SEAT_Z = TIP_Z + TIP_TO_STEP
 TOP_Z = SEAT_Z + SLEEVE_HEIGHT
-BASE_TOP_Z = JOINT_Z + SPIGOT_LENGTH
-SOCKET_ROOF_Z = BASE_TOP_Z + SOCKET_TOP_GAP
+TUBE_TOP_Z = JOINT_Z + SPIGOT_LENGTH
+SOCKET_ROOF_Z = TUBE_TOP_Z + SOCKET_TOP_GAP
 TIP_BELOW_COLLAR = JOINT_Z - TIP_Z
 
 TUBE_RADIUS = TUBE_DIAMETER / 2
@@ -119,50 +138,85 @@ SOCKET_RADIUS = SPIGOT_RADIUS + JOINT_CLEARANCE
 SEAT_BORE_RADIUS = DUST_CUP_DIAMETER / 2 + DUST_CUP_CLEARANCE
 SLEEVE_RADIUS = BARREL_DIAMETER / 2 + SLEEVE_CLEARANCE
 
-DISH_RADIUS = DISH_DIAMETER / 2
-TROUGH_OUTER_RADIUS = DISH_RADIUS - DISH_WALL
-TROUGH_INNER_RADIUS = TUBE_RADIUS + TUBE_LEDGE
-LID_SEAT_Z = DISH_HEIGHT - LID_THICKNESS
-LID_OUTER_RADIUS = DISH_RADIUS - DISH_RIM_WALL - LID_CLEARANCE
-LID_INNER_RADIUS = TUBE_RADIUS + LID_CLEARANCE
-BALLAST_VOLUME = (
-    pi * (TROUGH_OUTER_RADIUS**2 - TROUGH_INNER_RADIUS**2) * (LID_SEAT_Z - FLOOR_THICKNESS)
-)
+CONE_RADIUS = CONE_DIAMETER / 2
+NECK_RADIUS = NECK_DIAMETER / 2
+NECK_BORE_RADIUS = TUBE_RADIUS + NECK_CLEARANCE
+GROOVE_RADIUS = TUBE_RADIUS + BEAD_DEPTH + NECK_CLEARANCE * sqrt(2)
+GROOVE_HALF_HEIGHT = GROOVE_RADIUS - NECK_BORE_RADIUS
+
+# The inner shell runs parallel to the outer one, so step in along the radius by the
+# wall thickness projected onto the slope.
+CONE_SLOPE = (CONE_RADIUS - NECK_RADIUS) / (CONE_TOP_Z - CONE_FOOT_HEIGHT)
+CONE_RADIAL_WALL = CONE_WALL / cos(atan2(CONE_RADIUS - NECK_RADIUS, CONE_TOP_Z - CONE_FOOT_HEIGHT))
+FOOT_INNER_RADIUS = CONE_RADIUS - CONE_RADIAL_WALL
+SHELL_MEETS_BORE_Z = CONE_FOOT_HEIGHT + (FOOT_INNER_RADIUS - NECK_BORE_RADIUS) / CONE_SLOPE
 
 
-def _revolved(points):
+def _revolved(points, arc=360):
     """Revolve a closed half profile (radius on X, height on Z) around the Z axis."""
     with BuildPart() as part:
         with BuildSketch(Plane.XZ):
             with BuildLine():
                 Polyline(*points, close=True)
             make_face()
-        revolve(axis=Axis.Z)
+        revolve(axis=Axis.Z, revolution_arc=arc)
     return part.part
 
 
-def build_base():
-    """Dish, lid seat, tube and spigot."""
+def _slice(shape, bottom_z, top_z, width):
+    """Keep only the part of a shape between two heights, moved down to sit on Z=0."""
+    with BuildPart() as piece:
+        add(shape)
+        with Locations((0, 0, bottom_z)):
+            Box(
+                width,
+                width,
+                top_z - bottom_z,
+                align=(Align.CENTER, Align.CENTER, Align.MIN),
+                mode=Mode.INTERSECT,
+            )
+    return Pos(0, 0, -bottom_z) * piece.part
+
+
+def build_tube():
+    """Floor, tube, retaining bead and spigot."""
     return _revolved(
         [
             (0, 0),
-            (DISH_RADIUS - DISH_CHAMFER, 0),
-            (DISH_RADIUS, DISH_CHAMFER),
-            (DISH_RADIUS, DISH_HEIGHT),
-            (DISH_RADIUS - DISH_RIM_WALL, DISH_HEIGHT),
-            (DISH_RADIUS - DISH_RIM_WALL, LID_SEAT_Z),
-            (TROUGH_OUTER_RADIUS, LID_SEAT_Z),
-            (TROUGH_OUTER_RADIUS, FLOOR_THICKNESS),
-            (TROUGH_INNER_RADIUS, FLOOR_THICKNESS),
-            (TROUGH_INNER_RADIUS, LID_SEAT_Z),
-            (TUBE_RADIUS, LID_SEAT_Z),
+            (TUBE_RADIUS - FOOT_CHAMFER, 0),
+            (TUBE_RADIUS, FOOT_CHAMFER),
+            (TUBE_RADIUS, BEAD_Z - BEAD_DEPTH),
+            (TUBE_RADIUS + BEAD_DEPTH, BEAD_Z),
+            (TUBE_RADIUS, BEAD_Z + BEAD_DEPTH),
             (TUBE_RADIUS, JOINT_Z),
             (SPIGOT_RADIUS, JOINT_Z),
-            (SPIGOT_RADIUS, BASE_TOP_Z),
-            (CHAMBER_RADIUS, BASE_TOP_Z),
+            (SPIGOT_RADIUS, TUBE_TOP_Z),
+            (CHAMBER_RADIUS, TUBE_TOP_Z),
             (CHAMBER_RADIUS, FLOOR_THICKNESS),
             (0, FLOOR_THICKNESS),
         ]
+    )
+
+
+def build_cone_half():
+    """One half of the hollow cone, with its seam faces on the XZ plane."""
+    return _revolved(
+        [
+            (FOOT_INNER_RADIUS, 0),
+            (CONE_RADIUS - FOOT_CHAMFER, 0),
+            (CONE_RADIUS, FOOT_CHAMFER),
+            (CONE_RADIUS, CONE_FOOT_HEIGHT),
+            (NECK_RADIUS, CONE_TOP_Z),
+            (NECK_RADIUS, NECK_TOP_Z - RIM_CHAMFER),
+            (NECK_RADIUS - RIM_CHAMFER, NECK_TOP_Z),
+            (NECK_BORE_RADIUS, NECK_TOP_Z),
+            (NECK_BORE_RADIUS, BEAD_Z + GROOVE_HALF_HEIGHT),
+            (GROOVE_RADIUS, BEAD_Z),
+            (NECK_BORE_RADIUS, BEAD_Z - GROOVE_HALF_HEIGHT),
+            (NECK_BORE_RADIUS, SHELL_MEETS_BORE_Z),
+            (FOOT_INNER_RADIUS, CONE_FOOT_HEIGHT),
+        ],
+        arc=180,
     )
 
 
@@ -185,46 +239,25 @@ def build_collar():
     return Pos(0, 0, -JOINT_Z) * collar
 
 
-def build_lid():
-    """Flat ring closing the ballast dish."""
-    return _revolved(
-        [
-            (LID_INNER_RADIUS, 0),
-            (LID_OUTER_RADIUS, 0),
-            (LID_OUTER_RADIUS, LID_THICKNESS),
-            (LID_INNER_RADIUS, LID_THICKNESS),
-        ]
-    )
-
-
-def build_joint_test(base):
-    """Top of the base tube only, to try the spigot in the collar."""
-    bottom_z = JOINT_Z - JOINT_TEST_BELOW
-    with BuildPart() as test:
-        add(base)
-        with Locations((0, 0, bottom_z)):
-            Box(
-                TUBE_DIAMETER + 1,
-                TUBE_DIAMETER + 1,
-                BASE_TOP_Z - bottom_z,
-                align=(Align.CENTER, Align.CENTER, Align.MIN),
-                mode=Mode.INTERSECT,
-            )
-    return Pos(0, 0, -bottom_z) * test.part
-
-
 if __name__ == "__main__":
     OUTPUT_DIR.mkdir(exist_ok=True)
-    base = build_base()
+    tube = build_tube()
+    cone_half = build_cone_half()
     collar = build_collar()
-    lid = build_lid()
-    joint_test = build_joint_test(base)
-    export_stl(base, str(OUTPUT_DIR / "base.stl"))
+    joint_test = _slice(tube, JOINT_Z - JOINT_TEST_BELOW, TUBE_TOP_Z, TUBE_DIAMETER + 1)
+    neck_low, neck_high = BEAD_Z - NECK_TEST_HALF_HEIGHT, BEAD_Z + NECK_TEST_HALF_HEIGHT
+    neck_test_tube = _slice(tube, neck_low, neck_high, TUBE_DIAMETER + 10)
+    neck_test_half = _slice(cone_half, neck_low, neck_high, NECK_DIAMETER + 1)
+
+    export_stl(tube, str(OUTPUT_DIR / "tube.stl"))
+    export_stl(Rot(Z=-45) * cone_half, str(OUTPUT_DIR / "cone-half.stl"))  # fits the bed turned
     export_stl(collar, str(OUTPUT_DIR / "collar.stl"))
-    export_stl(lid, str(OUTPUT_DIR / "lid.stl"))
     export_stl(joint_test, str(OUTPUT_DIR / "joint-test.stl"))
-    print(f"stacked height {TOP_Z:.1f}, base {BASE_TOP_Z:.1f}, collar {TOP_Z - JOINT_Z:.1f}")
+    export_stl(neck_test_tube, str(OUTPUT_DIR / "neck-test-tube.stl"))
+    export_stl(neck_test_half, str(OUTPUT_DIR / "neck-test-half.stl"))
+
+    print(f"stacked height {TOP_Z:.1f}, tube {TUBE_TOP_Z:.1f}, collar {TOP_Z - JOINT_Z:.1f}")
     print(f"sleeve {SLEEVE_HEIGHT:.1f} of {STEP_TO_EXHAUST:.1f} available below the exhaust")
-    print(f"tip below collar {TIP_BELOW_COLLAR:.1f}, ballast {BALLAST_VOLUME / 1000:.0f} cm3")
+    print(f"tip below collar {TIP_BELOW_COLLAR:.1f}")
     if show is not None:
-        show(base, Pos(0, 0, JOINT_Z) * collar, Pos(0, 0, LID_SEAT_Z) * lid)
+        show(tube, cone_half, Pos(0, 0, JOINT_Z) * collar)
