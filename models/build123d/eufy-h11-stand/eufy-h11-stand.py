@@ -1,9 +1,9 @@
 """Stand for the Eufy HomeVac H11 (T2521), inlet down, attachment fitted.
 
 The vacuum stands about 470 mm tall on a 130 mm nozzle and most of its mass is high
-up, so the stand has two jobs: grip the body firmly and resist tipping. Four printed
-parts, no ballast: a tube, a collar on top of it, and two halves of a hollow cone
-glued around its foot.
+up, so the stand has two jobs: grip the body firmly and resist tipping. Five printed
+parts, no ballast and no glue: a tube, a collar on top of it, two halves of a hollow
+cone around its foot, and a ring that keeps the halves closed.
 
 How it holds
 ------------
@@ -30,8 +30,9 @@ sizes any of this.
 Assembly
 --------
 Stand the tube on a flat table, close both halves around it with the bead in the
-groove, and glue the two flat seams. The table sets the height and the tube aligns the
-halves. Keep glue off the tube.
+groove, and drop the neck ring down the tube onto the neck. The table sets the height
+and the tube aligns the halves. The foot is too wide for a ring that fits the bed, so
+the ring only holds the neck; if the foot still opens, glue the two flat seams.
 
 Fit checks (print these before the long parts)
 ----------------------------------------------
@@ -49,6 +50,7 @@ Print notes
   so the 2.4 mm shell comes out solid.
 - collar: upright, wide end on the plate. No supports; the bore narrows through a 45
   degree cone above the socket.
+- neck-ring: flat on the plate. No supports.
 """
 
 from math import atan2, cos, sqrt
@@ -89,7 +91,8 @@ STEP_TO_EXHAUST = 61.0  # purple line to the lower edge of the exhaust, the slee
 SLEEVE_CLEARANCE = 0.5  # per side, barrel to sleeve — confirmed on the printed collar
 DUST_CUP_CLEARANCE = 1.0  # per side, dust cup to seat bore — confirmed on the printed collar
 JOINT_CLEARANCE = 0.25  # per side, spigot to socket — confirmed with joint-test.stl
-NECK_CLEARANCE = 0.2  # per side, tube to cone neck and bead to groove
+NECK_CLEARANCE = 0.2  # per side, tube to cone neck and bead to groove — confirmed on test slices
+RING_CLEARANCE = 0.25  # per side, cone neck to ring — same slip fit as the spigot joint
 TIP_CLEARANCE = 4.0  # attachment tip to tube floor
 
 # --- Tube and collar (mm) ---
@@ -115,6 +118,10 @@ NECK_TOP_Z = 89.0  # top of the neck
 # --- Bead that keeps the tube in the cone (mm) ---
 BEAD_Z = 76.0  # bead centre, mid-neck
 BEAD_DEPTH = 2.5  # how far the bead stands off the tube; 45 degree flanks print unsupported
+
+# --- Ring that keeps the cone closed (mm) ---
+RING_WALL = 3.0  # radial wall, well over the minimum because it takes the hoop load
+RING_HEIGHT = 25.0  # the full straight neck, bead included
 
 # --- Test pieces (mm) ---
 JOINT_TEST_BELOW = 5.0  # tube kept below the shoulder, enough to hold on to
@@ -150,6 +157,9 @@ CONE_SLOPE = (CONE_RADIUS - NECK_RADIUS) / (CONE_TOP_Z - CONE_FOOT_HEIGHT)
 CONE_RADIAL_WALL = CONE_WALL / cos(atan2(CONE_RADIUS - NECK_RADIUS, CONE_TOP_Z - CONE_FOOT_HEIGHT))
 FOOT_INNER_RADIUS = CONE_RADIUS - CONE_RADIAL_WALL
 SHELL_MEETS_BORE_Z = CONE_FOOT_HEIGHT + (FOOT_INNER_RADIUS - NECK_BORE_RADIUS) / CONE_SLOPE
+
+RING_BORE_RADIUS = NECK_RADIUS + RING_CLEARANCE
+RING_OUTER_RADIUS = RING_BORE_RADIUS + RING_WALL
 
 
 def _revolved(points, arc=360):
@@ -239,11 +249,28 @@ def build_collar():
     return Pos(0, 0, -JOINT_Z) * collar
 
 
+def build_neck_ring():
+    """Plain ring that drops over the neck, chamfered inside as a lead-in at both ends."""
+    return _revolved(
+        [
+            (RING_BORE_RADIUS + FOOT_CHAMFER, 0),
+            (RING_OUTER_RADIUS - FOOT_CHAMFER, 0),
+            (RING_OUTER_RADIUS, FOOT_CHAMFER),
+            (RING_OUTER_RADIUS, RING_HEIGHT - RIM_CHAMFER),
+            (RING_OUTER_RADIUS - RIM_CHAMFER, RING_HEIGHT),
+            (RING_BORE_RADIUS + RIM_CHAMFER, RING_HEIGHT),
+            (RING_BORE_RADIUS, RING_HEIGHT - RIM_CHAMFER),
+            (RING_BORE_RADIUS, FOOT_CHAMFER),
+        ]
+    )
+
+
 if __name__ == "__main__":
     OUTPUT_DIR.mkdir(exist_ok=True)
     tube = build_tube()
     cone_half = build_cone_half()
     collar = build_collar()
+    neck_ring = build_neck_ring()
     joint_test = _slice(tube, JOINT_Z - JOINT_TEST_BELOW, TUBE_TOP_Z, TUBE_DIAMETER + 1)
     neck_low, neck_high = BEAD_Z - NECK_TEST_HALF_HEIGHT, BEAD_Z + NECK_TEST_HALF_HEIGHT
     neck_test_tube = _slice(tube, neck_low, neck_high, TUBE_DIAMETER + 10)
@@ -252,6 +279,7 @@ if __name__ == "__main__":
     export_stl(tube, str(OUTPUT_DIR / "tube.stl"))
     export_stl(Rot(Z=-45) * cone_half, str(OUTPUT_DIR / "cone-half.stl"))  # fits the bed turned
     export_stl(collar, str(OUTPUT_DIR / "collar.stl"))
+    export_stl(neck_ring, str(OUTPUT_DIR / "neck-ring.stl"))
     export_stl(joint_test, str(OUTPUT_DIR / "joint-test.stl"))
     export_stl(neck_test_tube, str(OUTPUT_DIR / "neck-test-tube.stl"))
     export_stl(neck_test_half, str(OUTPUT_DIR / "neck-test-half.stl"))
