@@ -17,6 +17,6 @@ select = ["E", "F", "W", "I"]
 
 [dependency-groups]
 dev = [
-    "ocp-vscode>=3.3.4",
+    "ocp-vscode>=4.2.0",
     "ruff>=0.15.10",
 ]
